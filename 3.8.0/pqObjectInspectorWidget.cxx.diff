@@ -1,0 +1,29 @@
+--- pqObjectInspectorWidget.cxx.orig	2010-05-28 02:07:13.000000000 +0900
++++ pqObjectInspectorWidget.cxx	2010-06-06 21:25:51.207074769 +0900
+@@ -63,6 +63,7 @@
+ #include "pqNetCDFPanel.h"
+ #include "pqObjectBuilder.h"
+ #include "pqObjectPanelInterface.h"
++#include "pqPOpenFOAMPanel.h"
+ #include "pqParticleTracerPanel.h"
+ #include "pqPipelineFilter.h"
+ #include "pqPipelineSource.h"
+@@ -155,6 +156,10 @@
+         {
+         return new pqNetCDFPanel(proxy, p);
+         }
++      if(QString("OpenFOAMReader") == proxy->getProxy()->GetXMLName())
++        {
++        return new pqPOpenFOAMPanel(proxy, p);
++        }
+ #ifdef PARAVIEW_USE_SILO
+       if(QString("SiloReader") == proxy->getProxy()->GetXMLName())
+         {
+@@ -191,6 +196,7 @@
+       {
+       if (QString("ExodusIIReader") == proxy->getProxy()->GetXMLName() ||
+         QString("ExodusRestartReader") == proxy->getProxy()->GetXMLName() ||
++        QString("OpenFOAMReader") == proxy->getProxy()->GetXMLName() ||
+ #ifdef PARAVIEW_USE_SILO
+         QString("SiloReader") == proxy->getProxy()->GetXMLName() ||
+ #endif

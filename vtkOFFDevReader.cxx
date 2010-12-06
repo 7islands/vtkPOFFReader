@@ -4751,7 +4751,8 @@ int vtkOFFReaderPrivate::MakeMetaDataAtTimeStep(
         const vtkStdString typeNameI(typeEntry->ToWord());
         // if the basic type of the patch is one of the followings the
         // point-filtered values at patches are overridden by patch values
-        if (typeNameI == "patch" || typeNameI == "wall")
+        if (typeNameI == "patch" || typeNameI == "wall" || typeNameI == "ggi"
+            || typeNameI == "cyclicGgi" || typeNameI == "overlapGgi")
           {
           BoundaryEntryI.BoundaryType = vtkFoamBoundaryEntry::PHYSICAL;
           allBoundariesNextStartFace += nFaces;

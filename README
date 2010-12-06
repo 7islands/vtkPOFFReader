@@ -15,11 +15,11 @@ Intended ParaView/VTK versions:
 ParaView 3.8/3.9, VTK 5.6/5.7
 
 
-1. Manifest and Licenses
-========================
+1. Manifest and License
+=======================
 
-  See License_v1.2.txt for full licensing terms of the all materials
-  of this package. Other noteworthy materials are:
+  See License_v1.2.txt for full licensing terms of the package. Other
+  noteworthy materials are:
 
   INSTALL.special (instructions to install as builtin reader)
   README (this file)

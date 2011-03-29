@@ -256,8 +256,8 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
 #if PQ_POPENFOAMPANEL_COLLABORATION
   this->Implementation->RegionTextCentered->SetLocation(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
-  this->Implementation->RegionTextCentered->SetSession(
-      this->proxy()->GetSession());
+  // there is no need to do SetSession() because session is set at the
+  // proxy creation
 #else
   this->Implementation->RegionTextCentered->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
@@ -280,8 +280,6 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
 #if PQ_POPENFOAMPANEL_COLLABORATION
   this->Implementation->RegionTextTop->SetLocation(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
-  this->Implementation->RegionTextTop->SetSession(
-      this->proxy()->GetSession());
 #else
   this->Implementation->RegionTextTop->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
@@ -299,8 +297,6 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
 #if PQ_POPENFOAMPANEL_COLLABORATION
   this->Implementation->RegionTextBottom->SetLocation(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
-  this->Implementation->RegionTextBottom->SetSession(
-      this->proxy()->GetSession());
 #else
   this->Implementation->RegionTextBottom->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
@@ -318,8 +314,6 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
 #if PQ_POPENFOAMPANEL_COLLABORATION
   this->Implementation->RegionTextGreen->SetLocation(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
-  this->Implementation->RegionTextGreen->SetSession(
-      this->proxy()->GetSession());
 #else
   this->Implementation->RegionTextGreen->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
@@ -897,7 +891,6 @@ void pqPOFFReaderPanel::onDataUpdated()
 #if PQ_POPENFOAMPANEL_COLLABORATION
       npxy->SetLocation(
           vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
-      npxy->SetSession(this->proxy()->GetSession());
 #else
       npxy->SetServers(
           vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);

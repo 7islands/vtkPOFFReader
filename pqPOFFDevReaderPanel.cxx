@@ -40,17 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vtkPVConfig.h" // for PARAVIEW_VERSIONs
 
-// With the refactored views and representations
-// (6b18e29b18e87a4ec39df045419177af561584cf), the region name stuff
-// should ultimately go to the server side by way of e.g. a custom
-// representation...
-#if PARAVIEW_VERSION_MAJOR > 3 \
-    || (PARAVIEW_VERSION_MAJOR == 3 && PARAVIEW_VERSION_MINOR >= 9)
-#define PQ_POPENFOAMPANEL_NEW_VIEWS 1
-#else
-#define PQ_POPENFOAMPANEL_NEW_VIEWS 0
-#endif
-
 // Qt
 #include <QCheckBox>
 #include <QComboBox>
@@ -93,6 +82,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkProcessModule.h"
 #include "vtkSmartPointer.h"
 #include "vtkVariantArray.h"
+
+// With the refactored views and representations
+// (6b18e29b18e87a4ec39df045419177af561584cf), the region name stuff
+// should ultimately go to the server side by way of e.g. a custom
+// representation...
+#if PARAVIEW_VERSION_MAJOR > 3 \
+    || (PARAVIEW_VERSION_MAJOR == 3 && PARAVIEW_VERSION_MINOR >= 9)
+#define PQ_POPENFOAMPANEL_NEW_VIEWS 1
+#else
+#define PQ_POPENFOAMPANEL_NEW_VIEWS 0
+#endif
+
+#if defined(__vtkSMRemoteObject_h)
+#define PQ_POPENFOAMPANEL_COLLABORATION 1
+#include "vtkSMSession.h"
+#else
+#define PQ_POPENFOAMPANEL_COLLABORATION 0
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // pqPOFFReaderPanel::pqImplementation
@@ -246,10 +253,17 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
   vtkSMProxyManager *pxm = this->proxy()->GetProxyManager();
   this->Implementation->RegionTextCentered.TakeReference(
       pxm->NewProxy("properties", "TextProperty"));
+#if PQ_POPENFOAMPANEL_COLLABORATION
+  this->Implementation->RegionTextCentered->SetLocation(
+      vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
+  this->Implementation->RegionTextCentered->SetSession(
+      this->proxy()->GetSession());
+#else
   this->Implementation->RegionTextCentered->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
   this->Implementation->RegionTextCentered->SetConnectionID(
       this->proxy()->GetConnectionID());
+#endif
   vtkSMDoubleVectorProperty::SafeDownCast(
       this->Implementation->RegionTextCentered->GetProperty("Color"))
       ->SetElements3(1.0, 0.0, 1.0);
@@ -263,10 +277,17 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
   // top-aligned
   this->Implementation->RegionTextTop.TakeReference(
       pxm->NewProxy("properties", "TextProperty"));
+#if PQ_POPENFOAMPANEL_COLLABORATION
+  this->Implementation->RegionTextTop->SetLocation(
+      vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
+  this->Implementation->RegionTextTop->SetSession(
+      this->proxy()->GetSession());
+#else
   this->Implementation->RegionTextTop->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
   this->Implementation->RegionTextTop->SetConnectionID(
       this->proxy()->GetConnectionID());
+#endif
   this->Implementation->RegionTextTop->Copy(
       this->Implementation->RegionTextCentered);
   vtkSMPropertyHelper(this->Implementation->RegionTextTop,
@@ -275,10 +296,17 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
   // bottom-aligned
   this->Implementation->RegionTextBottom.TakeReference(
       pxm->NewProxy("properties", "TextProperty"));
+#if PQ_POPENFOAMPANEL_COLLABORATION
+  this->Implementation->RegionTextBottom->SetLocation(
+      vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
+  this->Implementation->RegionTextBottom->SetSession(
+      this->proxy()->GetSession());
+#else
   this->Implementation->RegionTextBottom->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
   this->Implementation->RegionTextBottom->SetConnectionID(
       this->proxy()->GetConnectionID());
+#endif
   this->Implementation->RegionTextBottom->Copy(
       this->Implementation->RegionTextCentered);
   vtkSMPropertyHelper(this->Implementation->RegionTextBottom,
@@ -287,10 +315,17 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
   // green
   this->Implementation->RegionTextGreen.TakeReference(
       pxm->NewProxy("properties", "TextProperty"));
+#if PQ_POPENFOAMPANEL_COLLABORATION
+  this->Implementation->RegionTextGreen->SetLocation(
+      vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
+  this->Implementation->RegionTextGreen->SetSession(
+      this->proxy()->GetSession());
+#else
   this->Implementation->RegionTextGreen->SetServers(
       vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
   this->Implementation->RegionTextGreen->SetConnectionID(
       this->proxy()->GetConnectionID());
+#endif
   this->Implementation->RegionTextGreen->Copy(
       this->Implementation->RegionTextCentered);
   vtkSMDoubleVectorProperty::SafeDownCast(this->Implementation->RegionTextGreen
@@ -700,11 +735,19 @@ void pqPOFFReaderPanel::addRegionNameActors(pqView *pqv)
       for (vtkIdType regionI = 0; regionI < nRegions; regionI++)
         {
 #if PQ_POPENFOAMPANEL_NEW_VIEWS
+#if PQ_POPENFOAMPANEL_COLLABORATION
+        stream << vtkClientServerStream::Invoke
+            << VTKOBJECT(renderView) << "AddPropToNonCompositedRenderer"
+            << VTKOBJECT(vtkSMProxy::SafeDownCast(
+            this->Implementation->RegionNameActors->GetValue(
+            regionI).ToVTKObject())) << vtkClientServerStream::End;
+#else
         stream << vtkClientServerStream::Invoke
             << renderView->GetID() << "AddPropToNonCompositedRenderer"
             << vtkSMProxy::SafeDownCast(
             this->Implementation->RegionNameActors->GetValue(
             regionI).ToVTKObject())->GetID() << vtkClientServerStream::End;
+#endif
 #else
         renderView->AddPropToRenderer2D(vtkSMProxy::SafeDownCast(
             this->Implementation->RegionNameActors->GetValue(
@@ -712,8 +755,15 @@ void pqPOFFReaderPanel::addRegionNameActors(pqView *pqv)
 #endif
         }
 #if PQ_POPENFOAMPANEL_NEW_VIEWS
+#if PQ_POPENFOAMPANEL_COLLABORATION
+      // Invoke ExecuteStream() via session since
+      // vtkSMProxy::ExecuteStream() is protected
+      renderView->GetSession()->ExecuteStream(renderView->GetLocation(),
+          stream);
+#else
       vtkProcessModule::GetProcessModule()->SendStream(
           renderView->GetConnectionID(), renderView->GetServers(), stream);
+#endif
 #endif
       }
     }
@@ -734,11 +784,19 @@ void pqPOFFReaderPanel::removeRegionNameActors(pqView *pqv)
     for (vtkIdType regionI = 0; regionI < nRegions; regionI++)
       {
 #if PQ_POPENFOAMPANEL_NEW_VIEWS
+#if PQ_POPENFOAMPANEL_COLLABORATION
+      stream << vtkClientServerStream::Invoke
+          << VTKOBJECT(renderView) << "RemovePropFromNonCompositedRenderer"
+          << VTKOBJECT(vtkSMProxy::SafeDownCast(
+          this->Implementation->RegionNameActors->GetValue(
+          regionI).ToVTKObject())) << vtkClientServerStream::End;
+#else
       stream << vtkClientServerStream::Invoke
           << renderView->GetID() << "RemovePropFromNonCompositedRenderer"
           << vtkSMProxy::SafeDownCast(
           this->Implementation->RegionNameActors->GetValue(
           regionI).ToVTKObject())->GetID() << vtkClientServerStream::End;
+#endif
 #else
       renderView->RemovePropFromRenderer2D(vtkSMProxy::SafeDownCast(
           this->Implementation->RegionNameActors->GetValue(
@@ -746,8 +804,12 @@ void pqPOFFReaderPanel::removeRegionNameActors(pqView *pqv)
 #endif
       }
 #if PQ_POPENFOAMPANEL_NEW_VIEWS
+#if PQ_POPENFOAMPANEL_COLLABORATION
+    renderView->GetSession()->ExecuteStream(renderView->GetLocation(), stream);
+#else
     vtkProcessModule::GetProcessModule()->SendStream(
         renderView->GetConnectionID(), renderView->GetServers(), stream);
+#endif
 #endif
     }
 }
@@ -826,13 +888,21 @@ void pqPOFFReaderPanel::onDataUpdated()
     this->Implementation->RegionNameActors->SetNumberOfValues(nRegions);
     vtkSMProxyManager *pxm = this->proxy()->GetProxyManager();
     vtkClientServerStream stream;
+#if !PQ_POPENFOAMPANEL_COLLABORATION
     vtkProcessModule *pm = vtkProcessModule::GetProcessModule();
+#endif
     for (unsigned int regionI = 0; regionI < nRegions; regionI++)
       {
       vtkSMProxy *npxy = pxm->NewProxy("props", "TextActor");
+#if PQ_POPENFOAMPANEL_COLLABORATION
+      npxy->SetLocation(
+          vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
+      npxy->SetSession(this->proxy()->GetSession());
+#else
       npxy->SetServers(
           vtkProcessModule::CLIENT | vtkProcessModule::RENDER_SERVER);
       npxy->SetConnectionID(this->proxy()->GetConnectionID());
+#endif
       vtkSMPropertyHelper(npxy, "Text").Set(regionNames->GetElement(regionI));
       vtkSMPropertyHelper(npxy, "TextScaleMode").Set(0);
       // for the moment 0x4 stands for green color
@@ -865,6 +935,20 @@ void pqPOFFReaderPanel::onDataUpdated()
       // directly chat with the server about coordinate system and
       // position since the TextActor proxy can't handle property
       // manipulations like object->GetABC()->SetXYZ().
+#if PQ_POPENFOAMPANEL_COLLABORATION
+      stream << vtkClientServerStream::Invoke
+          << VTKOBJECT(npxy) << "GetPositionCoordinate"
+          << vtkClientServerStream::End
+          << vtkClientServerStream::Invoke << vtkClientServerStream::LastResult
+          << "SetCoordinateSystemToWorld" << vtkClientServerStream::End
+          << vtkClientServerStream::Invoke << VTKOBJECT(npxy)
+          << "GetPositionCoordinate" << vtkClientServerStream::End
+          << vtkClientServerStream::Invoke << vtkClientServerStream::LastResult
+          << "SetValue" << centroids[idx] << centroids[idx + 1]
+          << centroids[idx + 2] << vtkClientServerStream::End;
+      // stream is reset after send
+      npxy->GetSession()->ExecuteStream(npxy->GetLocation(), stream);
+#else
       stream << vtkClientServerStream::Invoke
           << npxy->GetID() << "GetPositionCoordinate"
           << vtkClientServerStream::End
@@ -877,6 +961,7 @@ void pqPOFFReaderPanel::onDataUpdated()
           << centroids[idx + 2] << vtkClientServerStream::End;
       // stream is reset after send
       pm->SendStream(npxy->GetConnectionID(), npxy->GetServers(), stream);
+#endif
       this->Implementation->RegionNameActors->SetValue(regionI, npxy);
       }
 

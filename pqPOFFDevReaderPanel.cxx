@@ -526,40 +526,6 @@ void pqPOFFReaderPanel::rescalePipelineSource(pqPipelineSource *ps)
 }
 
 //-----------------------------------------------------------------------------
-// Rescale scalar ranges of all relevant representations and render views
-void pqPOFFReaderPanel::rescaleAndRender()
-{
-  this->rescalePipelineSource(this->Implementation->Ps);
-
-  // true: force rendering now so as not to overlap the rendering
-  // process and the timer countdown
-  this->Implementation->Ps->renderAllViews(true);
-
-  // If one is happy with only updating the active view
-  //   if (this->view())
-  //    {
-  //    this->view()->render();
-  //    }
-  // All relevant views may be rendered this way as well
-  // QList<pqView *> views = this->Implementation->Ps->getViews();
-  // foreach (pqView *pqv, views)
-  //   {
-  //   // render the view
-  //   pqv->render();
-  //   }
-  // All views including irrelevant ones may be rendered by
-  //   pqApplicationCore::instance()->render();
-  // Or there's even another way
-  //   vtkSMProxyIterator *pIt = vtkSMProxyIterator::New();
-  //   pIt->SetModeToOneGroup();
-  //   for (pIt->Begin("views"); !pIt->IsAtEnd(); pIt->Next())
-  //     {
-  //     vtkSMViewProxy::SafeDownCast(pIt->GetProxy())->StillRender();
-  //     }
-  //   pIt->Delete();
-}
-
-//-----------------------------------------------------------------------------
 void pqPOFFReaderPanel::onEditingFinished()
 {
   // onEditingFinished is called only when the entered text is acceptable
@@ -602,12 +568,34 @@ void pqPOFFReaderPanel::onRefresh()
     vtkSMSourceProxy::SafeDownCast(this->proxy())->UpdatePipeline();
     if (vtkSMPropertyHelper(this->proxy(), "UiRescale").GetAsInt())
       {
-      this->rescaleAndRender();
+      // rescale scalar ranges of all relevant representations and render views
+      this->rescalePipelineSource(this->Implementation->Ps);
       }
-    else
-      {
-      this->Implementation->Ps->renderAllViews(true);
-      }
+    // true: force rendering now so as not to overlap the rendering
+    // process and the timer countdown
+    this->Implementation->Ps->renderAllViews(true);
+    // If one is happy with only updating the active view
+    //   if (this->view())
+    //    {
+    //    this->view()->render();
+    //    }
+    // All relevant views may be rendered this way as well
+    // QList<pqView *> views = this->Implementation->Ps->getViews();
+    // foreach (pqView *pqv, views)
+    //   {
+    //   // render the view
+    //   pqv->render();
+    //   }
+    // All views including irrelevant ones may be rendered by
+    //   pqApplicationCore::instance()->render();
+    // Or there's even another way
+    //   vtkSMProxyIterator *pIt = vtkSMProxyIterator::New();
+    //   pIt->SetModeToOneGroup();
+    //   for (pIt->Begin("views"); !pIt->IsAtEnd(); pIt->Next())
+    //     {
+    //     vtkSMViewProxy::SafeDownCast(pIt->GetProxy())->StillRender();
+    //     }
+    //   pIt->Delete();
     }
   else
     {
@@ -690,7 +678,9 @@ void pqPOFFReaderPanel::onTimerTimeout()
 
     if (vtkSMPropertyHelper(this->proxy(), "UiRescale").GetAsInt())
       {
-      this->rescaleAndRender();
+      this->rescalePipelineSource(this->Implementation->Ps);
+      // in this case re-renders only when rescaled
+      this->Implementation->Ps->renderAllViews(true);
       }
     }
 

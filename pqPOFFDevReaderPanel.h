@@ -74,7 +74,6 @@ protected slots:
 
 private:
   void rescalePipelineSource(pqPipelineSource *);
-  void rescaleAndRender();
   void removeAllRegionNameActors();
   void addRegionNameActors(pqView *);
   void removeRegionNameActors(pqView *);

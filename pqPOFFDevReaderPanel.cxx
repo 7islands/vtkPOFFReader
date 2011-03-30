@@ -600,7 +600,14 @@ void pqPOFFReaderPanel::onRefresh()
     // force updating everything (RequestInformation() + RequestData())
     this->proxy()->GetProperty("Refresh")->Modified();
     vtkSMSourceProxy::SafeDownCast(this->proxy())->UpdatePipeline();
-    this->rescaleAndRender();
+    if (vtkSMPropertyHelper(this->proxy(), "UiRescale").GetAsInt())
+      {
+      this->rescaleAndRender();
+      }
+    else
+      {
+      this->Implementation->Ps->renderAllViews(true);
+      }
     }
   else
     {

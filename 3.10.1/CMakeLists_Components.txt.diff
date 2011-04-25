@@ -1,0 +1,19 @@
+--- CMakeLists.txt.orig	2011-04-14 01:16:48.000000000 +0900
++++ CMakeLists.txt	2011-04-25 19:22:34.000000000 +0900
+@@ -129,6 +129,7 @@
+   pqOrbitCreatorDialog.h
+   pqOrbitWidget.h
+   pqOutputPortComboBox.h
++  pqPOFFDevReaderPanel.h
+ #  pqParticleTracerPanel.h
+   pqParallelCoordinatesChartDisplayPanel.h
+   pqPluginTreeWidget.h
+@@ -510,6 +511,8 @@
+   pqOrbitWidget.h
+   pqOutputPortComboBox.cxx
+   pqOutputPortComboBox.h
++  pqPOFFDevReaderPanel.cxx
++  pqPOFFDevReaderPanel.h
+   pqPQLookupTableManager.cxx
+   pqPQLookupTableManager.h
+   pqParallelCoordinatesChartDisplayPanel.cxx

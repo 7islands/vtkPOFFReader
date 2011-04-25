@@ -94,7 +94,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PQ_POPENFOAMPANEL_NEW_VIEWS 0
 #endif
 
-#if defined(__vtkSMRemoteObject_h)
+// Detect if the ParaView version is 3.11.1 or newer which has
+// Collaboration support
+// cf. http://www.paraview.org/pipermail/paraview/2011-April/020853.html
+#if PARAVIEW_VERSION_MAJOR > 3 \
+    || (PARAVIEW_VERSION_MAJOR == 3 && PARAVIEW_VERSION_MINOR > 11) \
+    || (PARAVIEW_VERSION_MAJOR == 3 && PARAVIEW_VERSION_MINOR == 11 \
+        && PARAVIEW_VERSION_PATCH >= 1)
 #define PQ_POPENFOAMPANEL_COLLABORATION 1
 #include "vtkSMSession.h"
 #else

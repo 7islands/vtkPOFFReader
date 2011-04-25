@@ -1,5 +1,5 @@
 Parallelized reader for OpenFOAM(R) file format for use with ParaView/VTK
-Version 2010MMDD
+Version 2011MMDD
 
 Credits:
 This reader is a modified version of the native reader included in
@@ -12,7 +12,7 @@ OpenCFD(R) trade marks. This offering is not approved or endorsed by
 OpenCFD Limited.
 
 Intended ParaView/VTK versions:
-ParaView 3.8/3.9, VTK 5.6/5.7
+ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
 
 
 1. Manifest and License

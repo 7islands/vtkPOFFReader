@@ -25,29 +25,29 @@ ParaView/Plugins/CMakeLists.txt like other plugins.
 Install as builtin reader by patching the ParaView sources
 ==========================================================
 
-Currently ParaView 3.8.0 is supported.
+Currently ParaView 3.10.1 is supported.
 
-1. Copy vtkOFFDevReader.{cxx,h} to ParaView-3.8.0/VTK/IO
-2. Apply 3.8.0/CMakeLists_IO.txt.diff to ParaView-3.8.0/VTK/IO/CMakeLists.txt
-3. Copy vtkPOFFReader.{cxx,h} to ParaView-3.8.0/VTK/Parallel
-4. Apply 3.8.0/CMakeLists_Parallel.txt.diff to
-   ParaView-3.8.0/VTK/Parallel/CMakeLists.txt
-5. Copy CMake/FindRegex.cmake to ParaView-3.8.0/VTK/CMake
+1. Copy vtkOFFDevReader.{cxx,h} to ParaView-3.10.1/VTK/IO
+2. Apply 3.10.1/CMakeLists_IO.txt.diff to ParaView-3.10.1/VTK/IO/CMakeLists.txt
+3. Copy vtkPOFFReader.{cxx,h} to ParaView-3.10.1/VTK/Parallel
+4. Apply 3.10.1/CMakeLists_Parallel.txt.diff to
+   ParaView-3.10.1/VTK/Parallel/CMakeLists.txt
+5. Copy CMake/FindRegex.cmake to ParaView-3.10.1/VTK/CMake
 6. Replace the section enclosed by
      <!-- Beginning of OpenFOAM Reader -->
    and
      <!-- End of OpenFOAM Reader -->
-   in ParaView-3.8.0/Servers/ServerManager/Resources/readers.xml with
+   in ParaView-3.10.1/Servers/ServerManager/Resources/readers.xml with
    the section enclosed by
      <!-- Beginning of Parallel OF File Format Reader -->
    and
      <!-- End of Parallel OF File Format Reader -->
    in the included OFFReaderSM.xml.
-7. Copy pqPOFFDevReaderPanel.{cxx,h} to ParaView-3.8.0/Qt/Components
-8. Apply 3.8.0/CMakeLists_Components.txt.diff to
-   ParaView-3.8.0/Qt/Components/CMakeLists.txt
-9. Apply 3.8.0/pqObjectInspectorWidget.cxx.diff to
-   ParaView-3.8.0/Qt/Components/pqObjectInspectorWidget.cxx
+7. Copy pqPOFFDevReaderPanel.{cxx,h} to ParaView-3.10.1/Qt/Components
+8. Apply 3.10.1/CMakeLists_Components.txt.diff to
+   ParaView-3.10.1/Qt/Components/CMakeLists.txt
+9. Apply 3.10.1/pqObjectInspectorWidget.cxx.diff to
+   ParaView-3.10.1/Qt/Components/pqObjectInspectorWidget.cxx
 
 
 Install by extending ParaView at compile time

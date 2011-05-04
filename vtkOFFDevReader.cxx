@@ -436,6 +436,8 @@ private:
       vtkPoints *);
   bool GetCellZoneMesh(vtkMultiBlockDataSet *, const vtkFoamIntVectorVector *,
       const vtkFoamIntVectorVector *, vtkPoints *);
+  void SetShallowCopies(vtkMultiBlockDataSet *, vtkMultiBlockDataSet *,
+      const char *);
 };
 
 vtkStandardNewMacro(vtkOFFReaderPrivate);
@@ -9464,6 +9466,30 @@ void vtkOFFReaderPrivate::AddArrayToFieldData(
 }
 
 //-----------------------------------------------------------------------------
+// Set shallow copies of the input datasets to output
+void vtkOFFReaderPrivate::SetShallowCopies(vtkMultiBlockDataSet *output,
+    vtkMultiBlockDataSet *input, const char *blockName)
+{
+  // Set shallow copies of the member datasets as the final output so
+  // as not to get overridden in the input temporal dataset during the
+  // execution of temporal pipeline executive.
+  vtkMultiBlockDataSet *mbds = vtkMultiBlockDataSet::New();
+  for (unsigned int blockI = 0; blockI < input->GetNumberOfBlocks(); blockI++)
+    {
+    vtkDataObject *ds = input->GetBlock(blockI)->NewInstance();
+    ds->ShallowCopy(input->GetBlock(blockI));
+    mbds->SetBlock(blockI, ds);
+    ds->FastDelete();
+    mbds->GetMetaData(blockI)->CopyEntry(input->GetMetaData(blockI),
+        vtkCompositeDataSet::NAME());
+    }
+  const unsigned int groupTypeI = output->GetNumberOfBlocks();
+  output->SetBlock(groupTypeI, mbds);
+  mbds->FastDelete();
+  this->SetBlockName(output, groupTypeI, blockName);
+}
+
+//-----------------------------------------------------------------------------
 // return 0 if there's any error, 1 if success
 int vtkOFFReaderPrivate::RequestData(vtkMultiBlockDataSet *output,
 bool recreateInternalMesh, bool recreateBoundaryMesh, bool updateVariables,
@@ -9871,7 +9897,14 @@ bool recreateLagrangianMesh)
   // Add Internal Mesh to final output only if selected for display
   if (this->InternalMesh != NULL)
     {
-    output->SetBlock(0, this->InternalMesh);
+    // Set shallow copy of the unstructured grid as the final output
+    // so as not to get overridden when it is used as the input of
+    // temporal filters during the execution of the temporal pipeline
+    // executive.
+    vtkUnstructuredGrid *ug = vtkUnstructuredGrid::New();
+    ug->ShallowCopy(this->InternalMesh);
+    output->SetBlock(0, ug);
+    ug->FastDelete();
     this->SetBlockName(output, 0,
         vtkOFFReaderPrivate::InternalMeshIdentifier);
     }
@@ -9879,8 +9912,11 @@ bool recreateLagrangianMesh)
   // Add Internal Surface Mesh to final output only if selected for display
   if (this->SurfaceMesh != NULL)
     {
+    vtkPolyData *pd = vtkPolyData::New();
+    pd->ShallowCopy(this->SurfaceMesh);
     const unsigned int groupTypeI = output->GetNumberOfBlocks();
-    output->SetBlock(groupTypeI, this->SurfaceMesh);
+    output->SetBlock(groupTypeI, pd);
+    pd->FastDelete();
     this->SetBlockName(output, groupTypeI,
         vtkOFFReaderPrivate::SurfaceMeshIdentifier);
     }
@@ -9888,56 +9924,43 @@ bool recreateLagrangianMesh)
   // set boundary meshes/data as output
   if (this->BoundaryMesh != NULL && this->BoundaryMesh->GetNumberOfBlocks() > 0)
     {
-    const unsigned int groupTypeI = output->GetNumberOfBlocks();
-    output->SetBlock(groupTypeI, this->BoundaryMesh);
-    this->SetBlockName(output, groupTypeI, "[Patches]");
+    this->SetShallowCopies(output, this->BoundaryMesh, "[Patches]");
     }
 
   // set lagrangian mesh as output
   if (this->LagrangianMesh && this->LagrangianMesh->GetNumberOfBlocks() > 0)
     {
-    const unsigned int groupTypeI = output->GetNumberOfBlocks();
-    output->SetBlock(groupTypeI, this->LagrangianMesh);
-    this->SetBlockName(output, groupTypeI, "[Lagrangian Particles]");
+    this->SetShallowCopies(output, this->LagrangianMesh,
+        "[Lagrangian Particles]");
     }
 
   if (this->Parent->GetReadZones())
     {
-    vtkMultiBlockDataSet *zones = NULL;
+    vtkMultiBlockDataSet *zones
+        = (this->PointZoneMesh || this->FaceZoneMesh || this->CellZoneMesh
+        ? vtkMultiBlockDataSet::New() : 0);
+
     // set Zone Meshes as output
     if (this->PointZoneMesh != NULL)
       {
-      zones = vtkMultiBlockDataSet::New();
-      const unsigned int zoneTypeI = zones->GetNumberOfBlocks();
-      zones->SetBlock(zoneTypeI, this->PointZoneMesh);
-      this->SetBlockName(zones, zoneTypeI, "[pointZones]");
+      this->SetShallowCopies(zones, this->PointZoneMesh, "[pointZones]");
       }
 
     if (this->FaceZoneMesh != NULL)
       {
-      if (zones == NULL)
-        {
-        zones = vtkMultiBlockDataSet::New();
-        }
-      const unsigned int zoneTypeI = zones->GetNumberOfBlocks();
-      zones->SetBlock(zoneTypeI, this->FaceZoneMesh);
-      this->SetBlockName(zones, zoneTypeI, "[faceZones]");
+      this->SetShallowCopies(zones, this->FaceZoneMesh, "[faceZones]");
       }
 
     if (this->CellZoneMesh != NULL)
       {
-      if (zones == NULL)
-        {
-        zones = vtkMultiBlockDataSet::New();
-        }
-      const unsigned int zoneTypeI = zones->GetNumberOfBlocks();
-      zones->SetBlock(zoneTypeI, this->CellZoneMesh);
-      this->SetBlockName(zones, zoneTypeI, "[cellZones]");
+      this->SetShallowCopies(zones, this->CellZoneMesh, "[cellZones]");
       }
+
     if (zones != NULL)
       {
       const unsigned int groupTypeI = output->GetNumberOfBlocks();
       output->SetBlock(groupTypeI, zones);
+      zones->FastDelete();
       this->SetBlockName(output, groupTypeI, "[Zones]");
       }
     }

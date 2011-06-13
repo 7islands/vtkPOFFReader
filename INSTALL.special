@@ -87,7 +87,7 @@ official binary of CMake from Kitware.
 3. The Qt path assumed by qmake included in the Salome distribution is
 hardcoded to /local01/salome/prerequis/install/Qt-463p1 thus you have
 to create the directory and make a symbolic link to the actual
-installation direction of Qt included in Salome.
+installation directory of Qt included in Salome.
 
   sudo mkdir -p /local01/salome/prerequis/install
   cd /local01/salome/prerequis/install

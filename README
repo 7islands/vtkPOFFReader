@@ -21,7 +21,8 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
   See License_v1.2.txt for full licensing terms of the package. Other
   noteworthy materials are:
 
-  INSTALL.special (instructions to install as builtin reader)
+  INSTALL.special (instructions to install as builtin reader and as
+                   Salome ParaViS plugin)
   README (this file)
   pf (user convenience script; see Section 3)
   readerPanel.pdf (quick reference guide)

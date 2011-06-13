@@ -1,10 +1,12 @@
-Currently  three ways  are supported  for installing  the  reader into
-ParaView:  install  as a  plugin,  install  by  patching the  ParaView
-sources, and install by extending  ParaView at compile time. In either
-case, please  do not  forget to set  CMAKE_BUILD_TYPE to  Release when
-configuring  with CMake  in order  for compiler  optimization  to work
+Currently three ways are supported for installing the reader into
+ParaView: install as a plugin, install by patching the ParaView
+sources, and install by extending ParaView at compile time. In either
+case, please do not forget to set CMAKE_BUILD_TYPE to Release when
+configuring with CMake in order for compiler optimization to work
 unless you have a specific intention for choosing other options.
 
+The reader may also be installed as a plugin for the ParaViS module of
+Salome 6.3.0 (or possibly later).
 
 Install as out-of-source plugin
 ===============================
@@ -55,7 +57,71 @@ Install by extending ParaView at compile time
 
 Refer to the "Build Code As Part Of ParaView" section of
 http://paraview.org/Wiki/Extending_ParaView_at_Compile_Time.
-The module name is POFFDevReader. 
+The module name is POFFDevReader.
 
 NOTE: The compile-time extended installation will not have the
 additional reader panel UI.
+
+
+Install as plugin for Salome ParaViS module
+===========================================
+
+Salome 6.3.0 integrates the ParaViS module which in fact is a full set
+of ParaView 3.10.1. The reader may also be installed as a plugin for
+the module. Here is what the developer did for a successful
+installation in conjunction with the universal binary of Salome 6.3.0
+under Ubuntu 10.04 64bit.
+
+Here it is assumed that the Salome universal binary has been installed
+to /opt/Salome-V6_3_0_public_64bit.
+
+1. The C++ compiler used to build the plugin needs to be the same
+version as the one used to compile Salome, which is GCC 4.1.2. Thus
+install g++-4.1.2 from Synaptic.
+
+2. CMake included in the Ubuntu distribution will not work due to a
+version incompatibility of libstdc++ between Ubuntu and the one
+included in the Salome binary. You have to download and install the
+official binary of CMake from Kitware.
+
+3. The Qt path assumed by qmake included in the Salome distribution is
+hardcoded to /local01/salome/prerequis/install/Qt-463p1 thus you have
+to create the directory and make a symbolic link to the actual
+installation direction of Qt included in Salome.
+
+  sudo mkdir -p /local01/salome/prerequis/install
+  cd /local01/salome/prerequis/install
+  sudo ln -s /opt/Salome-V6_3_0_public_64bit/SALOME6/prerequis/Qt-463p1
+
+4. Source the prerequisite environment of Salome.
+
+  source /opt/Salome-V6_3_0_public_64bit/SALOME6/V6_3_0_public/prerequis-V6_3_0_public.sh
+
+5. As usual, create a build directory for the plugin, cd to the
+directory and run ccmake.
+
+6. Toggle to Advanced Mode and set CMAKE_CXX_COMPILER to
+/usr/bin/g++-4.1 and CMAKE_C_COMPILER to
+/usr/bin/gcc-4.1. ParaView_DIR should automatically have been set to
+/opt/Salome-V6_3_0_public_64bit/SALOME6/prerequis/ParaView-3101p1cm284-py266hdf5184gr2263dox173_patchxml2278qt463p1/lib/paraview-3.10
+but set manually if not.
+
+7. Run make.
+
+8. Copy the produced plugin binaries to
+/opt/Salome-V6_3_0_public_64bit/SALOME6/prerequis/ParaView-3101p1cm284-py266hdf5184gr2263dox173_patchxml2278qt463p1/lib/paraview-3.10/.
+
+   cp -a lib*.so /opt/Salome-V6_3_0_public_64bit/SALOME6/prerequis/ParaView-3101p1cm284-py266hdf5184gr2263dox173_patchxml2278qt463p1/lib/paraview-3.10/
+
+9. The Qt path may be safely removed once the installation is
+complete.
+
+  cd /
+  sudo rm local01/salome/prerequis/install/Qt-463p1
+  sudo rmdir -p local01/salome/prerequis/install
+
+10. Start Salome, choose ParaViS module and check if the plugins are
+successfully loaded by Tools->Manage Plugins...
+
+11. OpenFOAM case may be loaded from File->Open ParaView File..., not
+File->Open...

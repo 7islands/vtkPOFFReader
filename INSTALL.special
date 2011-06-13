@@ -91,7 +91,7 @@ installation directory of Qt included in Salome.
 
   sudo mkdir -p /local01/salome/prerequis/install
   cd /local01/salome/prerequis/install
-  sudo ln -s /opt/Salome-V6_3_0_public_64bit/SALOME6/prerequis/Qt-463p1
+  sudo ln -s /opt/Salome-V6_3_0_public_64bit/SALOME6/prerequis/Qt-463p1 .
 
 4. Source the prerequisite environment of Salome.
 

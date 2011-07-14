@@ -237,7 +237,7 @@ public:
   { this->EnableAllSelectionArrays(this->PatchDataArraySelection); }
 
   // Description:
-  // Set/Get whether to create cell-to-point translated data for cell-type data
+  // Set/Get whether to create cell-to-point translated data for cell-type data.
   vtkSetMacro(CreateCellToPoint,int);
   vtkGetMacro(CreateCellToPoint,int);
   vtkBooleanMacro(CreateCellToPoint, int);
@@ -256,29 +256,35 @@ public:
 
   // Option for reading old binary lagrangian/positions format
   // Description:
-  // Set/Get whether the lagrangian/positions is in OF 1.3 format
+  // Set/Get whether the lagrangian/positions is in OF 1.3 format.
   vtkSetMacro(PositionsIsIn13Format, int);
   vtkGetMacro(PositionsIsIn13Format, int);
   vtkBooleanMacro(PositionsIsIn13Format, int);
 
   // Option for reading single precision binary format
   // Description:
-  // Set/Get whether the binary files are in single precision
+  // Set/Get whether the binary files are in single precision.
   vtkSetMacro(IsSinglePrecisionBinary, int);
   vtkGetMacro(IsSinglePrecisionBinary, int);
   vtkBooleanMacro(IsSinglePrecisionBinary, int);
 
   // Description:
-  // Determine if time directories are to be listed according to controlDict
+  // Determine if time directories are to be listed according to controlDict.
   vtkSetMacro(ListTimeStepsByControlDict, int);
   vtkGetMacro(ListTimeStepsByControlDict, int);
   vtkBooleanMacro(ListTimeStepsByControlDict, int);
 
   // Description:
-  // Add dimensions to array names
+  // Add dimensions to array names.
   vtkSetMacro(AddDimensionsToArrayNames, int);
   vtkGetMacro(AddDimensionsToArrayNames, int);
   vtkBooleanMacro(AddDimensionsToArrayNames, int);
+
+  // Description:
+  // Force zero gradient to boundary fields.
+  vtkSetMacro(ForceZeroGradient, int);
+  vtkGetMacro(ForceZeroGradient, int);
+  vtkBooleanMacro(ForceZeroGradient, int);
 
   // Description:
   // Set/Get whether zones will be read.
@@ -344,6 +350,9 @@ private:
   // add dimensions to array names
   int AddDimensionsToArrayNames;
 
+  // force zero gradient to boundary fields
+  int ForceZeroGradient;
+
   // has mesh changed at this time step or not
   int MeshChanged;
 
@@ -376,6 +385,7 @@ private:
   processorPatchType OutputProcessorPatchesOld;
   int ListTimeStepsByControlDictOld;
   int AddDimensionsToArrayNamesOld;
+  int ForceZeroGradientOld;
 
   // paths to Lagrangians
   vtkStringArray *LagrangianPaths;

@@ -27,15 +27,23 @@ ParaView/Plugins/CMakeLists.txt like other plugins.
 Install as builtin reader by patching the ParaView sources
 ==========================================================
 
-Currently ParaView 3.10.1 is supported.
+Currently ParaView 3.10.1 is supported. There is a Python script
+builtinConfigure.py in the 3.10.1 subdirectory that patches the
+ParaView source tree.
+
+  cd 3.10.1
+  ./builtinConfigure.py <top directory of ParaView source tree>
+
+Then build ParaView as usual.
+
+Alternatively, the ParaView source tree may be hand-patched by the
+following procedure.
 
 1. Copy vtkOFFDevReader.{cxx,h} to ParaView-3.10.1/VTK/IO
-2. Apply 3.10.1/CMakeLists_IO.txt.diff to ParaView-3.10.1/VTK/IO/CMakeLists.txt
-3. Copy vtkPOFFReader.{cxx,h} to ParaView-3.10.1/VTK/Parallel
-4. Apply 3.10.1/CMakeLists_Parallel.txt.diff to
-   ParaView-3.10.1/VTK/Parallel/CMakeLists.txt
-5. Copy CMake/FindRegex.cmake to ParaView-3.10.1/VTK/CMake
-6. Replace the section enclosed by
+2. Copy vtkPOFFDevReader.{cxx,h} to ParaView-3.10.1/VTK/Parallel
+3. Copy CMake/FindRegex.cmake to ParaView-3.10.1/VTK/CMake
+4. Copy pqPOFFDevReaderPanel.{cxx,h} to ParaView-3.10.1/Qt/Components
+5. Replace the section enclosed by
      <!-- Beginning of OpenFOAM Reader -->
    and
      <!-- End of OpenFOAM Reader -->
@@ -45,11 +53,8 @@ Currently ParaView 3.10.1 is supported.
    and
      <!-- End of Parallel OF File Format Reader -->
    in the included OFFReaderSM.xml.
-7. Copy pqPOFFDevReaderPanel.{cxx,h} to ParaView-3.10.1/Qt/Components
-8. Apply 3.10.1/CMakeLists_Components.txt.diff to
-   ParaView-3.10.1/Qt/Components/CMakeLists.txt
-9. Apply 3.10.1/pqObjectInspectorWidget.cxx.diff to
-   ParaView-3.10.1/Qt/Components/pqObjectInspectorWidget.cxx
+6. Change directory to ParaView-3.10.1 and apply
+   3.10.1/CMakeLists.diff with "patch -p1".
 
 
 Install by extending ParaView at compile time

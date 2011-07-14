@@ -1,0 +1,93 @@
+diff --git a/Qt/Components/CMakeLists.txt b/Qt/Components/CMakeLists.txt
+index 7a96748..6dc48d9 100644
+--- a/Qt/Components/CMakeLists.txt
++++ b/Qt/Components/CMakeLists.txt
+@@ -129,6 +129,7 @@ QT4_WRAP_CPP(MOC_BUILT_SOURCES
+   pqOrbitCreatorDialog.h
+   pqOrbitWidget.h
+   pqOutputPortComboBox.h
++  pqPOFFDevReaderPanel.h
+ #  pqParticleTracerPanel.h
+   pqParallelCoordinatesChartDisplayPanel.h
+   pqPluginTreeWidget.h
+@@ -510,6 +511,8 @@ VTK_ADD_LIBRARY(pqComponents
+   pqOrbitWidget.h
+   pqOutputPortComboBox.cxx
+   pqOutputPortComboBox.h
++  pqPOFFDevReaderPanel.cxx
++  pqPOFFDevReaderPanel.h
+   pqPQLookupTableManager.cxx
+   pqPQLookupTableManager.h
+   pqParallelCoordinatesChartDisplayPanel.cxx
+diff --git a/Qt/Components/pqObjectInspectorWidget.cxx b/Qt/Components/pqObjectInspectorWidget.cxx
+index dcb559c..4e0c896 100644
+--- a/Qt/Components/pqObjectInspectorWidget.cxx
++++ b/Qt/Components/pqObjectInspectorWidget.cxx
+@@ -64,6 +64,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ #include "pqNetCDFPanel.h"
+ #include "pqObjectBuilder.h"
+ #include "pqObjectPanelInterface.h"
++#include "pqPOFFDevReaderPanel.h"
+ #include "pqParticleTracerPanel.h"
+ #include "pqPipelineFilter.h"
+ #include "pqPipelineSource.h"
+@@ -158,6 +159,10 @@ public:
+         {
+         return new pqNetCDFPanel(proxy, p);
+         }
++      if(QString("OpenFOAMReader") == proxy->getProxy()->GetXMLName())
++        {
++        return new pqPOFFReaderPanel(proxy, p);
++        }
+       }
+     return NULL;
+     }
+@@ -188,7 +193,8 @@ public:
+       {
+       if (QString("ExodusIIReader") == proxy->getProxy()->GetXMLName() ||
+         QString("ExodusRestartReader") == proxy->getProxy()->GetXMLName() ||
+-        QString("netCDFReader") == proxy->getProxy()->GetXMLName()
++        QString("netCDFReader") == proxy->getProxy()->GetXMLName() ||
++        QString("OpenFOAMReader") == proxy->getProxy()->GetXMLName()
+          )
+         {
+         return true;
+diff --git a/VTK/IO/CMakeLists.txt b/VTK/IO/CMakeLists.txt
+index b5d7c25..9b8e2cb 100644
+--- a/VTK/IO/CMakeLists.txt
++++ b/VTK/IO/CMakeLists.txt
+@@ -94,6 +94,7 @@ vtkMoleculeReaderBase.cxx
+ vtkNetCDFCFReader.cxx
+ vtkNetCDFPOPReader.cxx
+ vtkNetCDFReader.cxx
++vtkOFFDevReader.cxx
+ vtkOBJReader.cxx
+ ${_VTK_OGGTHEORA_SOURCES}
+ vtkOpenFOAMReader.cxx
+@@ -402,6 +403,14 @@ IF ( VTK_USE_ODBC AND ODBC_FOUND )
+ ENDIF ( VTK_USE_ODBC AND ODBC_FOUND )
+ 
+ #-----------------------------------------------------------------------------
++# Regex
++# See if a POSIX Regex library exists on this system. Used for
++# vtkNewOpenFOAMReader.
++#
++INCLUDE(${VTK_CMAKE_DIR}/FindRegex.cmake)
++
++
++#-----------------------------------------------------------------------------
+ # Add these classes only if vtkTypeUInt64Array exists
+ IF(VTK_HAS_UINT64_ARRAY)
+   SET(Kit_SRCS
+diff --git a/VTK/Parallel/CMakeLists.txt b/VTK/Parallel/CMakeLists.txt
+index a482155..d062d0e 100644
+--- a/VTK/Parallel/CMakeLists.txt
++++ b/VTK/Parallel/CMakeLists.txt
+@@ -48,6 +48,7 @@ vtkExtractUserDefinedPiece.cxx
+ vtkMPIImageReader.cxx
+ vtkMultiProcessController.cxx
+ vtkMultiProcessStream.cxx
++vtkPOFFDevReader.cxx
+ vtkParallelFactory.cxx
+ vtkPassThroughFilter.cxx
+ vtkPCellDataToPointData.cxx

@@ -32,7 +32,7 @@
       <Entry value="2" text="Decomposed Case (Multiblock)"/>
     </EnumerationDomain>
     <Documentation>
-      The property indicates whether decomposed mesh or reconstructed mesh should be read
+      The property indicates whether decomposed mesh or reconstructed mesh should be read.
     </Documentation>
   </IntVectorProperty>
 
@@ -72,6 +72,19 @@
     <BooleanDomain name="bool"/>
     <Documentation>
       Read dimensional units from field data and add them to array names as human-readable string.
+    </Documentation>
+  </IntVectorProperty>
+
+  <IntVectorProperty
+    name="ForceZeroGradient"
+    command="SetForceZeroGradient"
+    number_of_elements="1"
+    default_values="0"
+    label="Force zero gradient to boundary fields"
+    animateable="0">
+    <BooleanDomain name="bool"/>
+    <Documentation>
+      Force zeroGradient to boundary fields (assign pathInternalField values to boundaries).
     </Documentation>
   </IntVectorProperty>
 

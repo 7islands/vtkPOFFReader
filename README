@@ -11,8 +11,8 @@ producer of the OpenFOAM software and owner of the OPENFOAM(R) and
 OpenCFD(R) trade marks. This offering is not approved or endorsed by
 OpenCFD Limited.
 
-Intended ParaView/VTK versions:
-ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
+Intended ParaView/VTK/Salome versions:
+ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9, Salome 6.3.0
 
 
 1. Manifest and License
@@ -32,14 +32,15 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
 ===============
 
   The reader can be installed as either one of out-of-source plugins,
-  in-source plugins or a builtin reader. Unlike the past versions of
-  the reader, if one chooses to install the reader as out-of-source
-  plugins the main ParaView sources no longer have to be patched. Thus
-  in general installing as out-of-source plugins is recommended.
+  in-source plugins or a builtin reader.
 
-  On the other hand, installing as in-source plugins and as a builtin
-  reader is mainly meant for Linux package maintainers who intend to
-  distribute their own versions of ParaView sources and binaries.
+  If one chooses to install the reader as out-of-source plugins the
+  main ParaView sources do not have to be modified. Thus in general
+  installing as out-of-source plugins is recommended.
+
+  Installing as in-source plugins and as a builtin reader is meant for
+  Linux package maintainers who intend to distribute their own
+  versions of ParaView sources and binaries.
 
  2.1 Prerequisites
  -----------------
@@ -49,12 +50,12 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
   - The reader has absolutely no dependence on any of the OpenFOAM
     libraries (which is why the reader is called native). However the
     reader can be installed somewhat easier as plugins if installed
-    with ParaView 3.8.0 that comes with the ThirdParty package of
-    OpenFOAM 1.7.
+    with ParaView that comes with the ThirdParty package of OpenFOAM
+    as shown below.
 
   - When configuring the reader with CMake, a system POSIX regex
     (regular expression) library is searched for and the reader uses
-    the library if found in order to support the regex'ed dictionary
+    the library if found in order to support regex'ed dictionary
     keyword syntax. If one is not found but the reader is being built
     with Visual Studio 2008 SP1 or later, the regex library in STL TR1
     extension that comes with Visual Studio 2008 SP1 or later is used
@@ -84,21 +85,20 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
     PARAVIEW_USE_MPI = ON
 
   . After installation, do not remove the ParaView build directory but
-  keep it since it is required in building the plugins afterwards.
+  keep it since it is required to build the plugins afterwards.
 
-  Alternatively, a parallelized ParaView-3.8.0 can be built using the
-  OpenFOAM ThirdParty-1.7.0 source package (ThirdParty-1.7.0.gtgz)
-  by issuing the following commands under OpenFOAM environment:
+  Alternatively, a parallelized ParaView can be built using the
+  OpenFOAM ThirdParty source package by issuing the following commands
+  under OpenFOAM environment:
 
     cd $WM_THIRD_PARTY_DIR
-    mv ${ParaView_DIR} ${ParaView_DIR}.orig
     ./makeParaView -mpi
 
   2.2.2 Building and installing the plugins
 
-  Create a build directory of the plugins and point CMake to the top
-  directory of the reader source tree (the directory where this README
-  file is in).
+  Create a build directory for the plugins and point CMake from the
+  build directory to the top directory of the reader source tree (the
+  directory where this README file is in).
 
     mkdir <the plugin build directory>
     cd <the plugin build directory>
@@ -121,29 +121,26 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
   Manage Plugins/Extensions... menu. There one will see "Local plugins
   are automatically searched for in..." followed by a list of
   directories. Alternatively, if the plugins are being built within
-  OpenFOAM environment in conjunction with the ThirdParty-1.7.0
-  ParaView, all of these variables are set automatically as default
-  values.
+  OpenFOAM environment in conjunction with the ThirdParty ParaView,
+  all of these variables are set automatically as default values.
 
   Then build and install the plugins.
 
     make
     make install
 
-  By these steps the reader and the UI plugins
-  (libPOFFDevReaderPlugin and libPOFFDevReaderPanelPlugin) are installed
-  to the local plugin directory.
+  By these steps the reader and the UI plugins will be installed to
+  the local plugin directory.
 
   [!!IMPORTANT!!] ParaView may have different remote plugin
   directories than the local plugin directories when in client/server
-  mode. In such cases the installed server-side plugin
-  (libPOFFDevReaderPlugin) under the local plugin directory must be
-  manually copied (or symbolic linked) by hand to one of the remote
-  plugin directories. To check remote plugin directories, start
-  ParaView in client/server configuration and choose Tools -> Manage
-  Plugins/Extensions... . Attempting to read OpenFOAM cases in
-  client/server mode without the plugin loaded as a remote plugin will
-  crash ParaView.
+  mode. In such cases the installed server-side plugin under the local
+  plugin directory must be manually copied (or symbolic linked) by
+  hand to one of the remote plugin directories. To check remote plugin
+  directories, start ParaView in client/server configuration and
+  choose Tools -> Manage Plugins/Extensions... . Attempting to read
+  OpenFOAM cases in client/server mode without the plugin loaded as a
+  remote plugin will crash ParaView.
 
  2.3 Install as out-of-source plugins (Windows)
  ----------------------------------------------
@@ -180,6 +177,12 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
 
   Follow the "Install by patching the ParaView sources" section of the
   INSTALL.special file. After that, build ParaView as usual.
+
+ 2.6 Install as plugins for Salome ParaViS module
+ ------------------------------------------------
+
+  Follow the "Install as plugin for Salome ParaViS module" section of
+  the INSTALL.special file.
 
 
 3. Usage
@@ -423,11 +426,18 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
   - Fixed unmatched decomposition of polyhedral cells located at both
     sides of processor boundary.
 
-  - Added support for surfaceFields (thanks to Sandeep Menon).
+  - Added support for surfaceFields (thanks to Sandeep Menon for code
+    contribution).
 
   - Changed file and class names from
     NewOpenFOAMReader/NewPOpenFOAMReader to OFFDevReader/POFFDevReader
     following the trademark guidelines of OpenCFD Limited.
+
+  - Add "Force zero gradient to boundary fields" that forcibly assigns
+    patch-internal field values to boundary fields.
+
+  - Add a script to automatically patch ParView 3.10.1 sources for
+    builtin installtion.
 
 
 8. To do
@@ -451,19 +461,21 @@ ParaView 3.8/3.10/3.11, VTK 5.6/5.8/5.9
 
   Thanks to
 
-  - Philippose Rajan, for contribution of nice and neat user
-    interface, extensively testing the code, interesting discussions
-    and suggestions.
+  - Pierre-Olivier Dallaire for testing.
 
-  - Mark Olesen, for contribution of pre-installation script (although
+  - Eugene de Villiers of Engys Limited for financial contribution.
+
+  - Masashi Imano for testing the code.
+
+  - Sandeep Menon for internal surface mesh code.
+
+  - Mark Olesen for contribution of pre-installation script (although
     the script is not included in this release due to the changes in
     the installation steps), testing, suggestions and an Wiki page
     update.
 
-  - Pierre-Olivier Dallaire, for testing.
+  - Philippose Rajan for contribution of nice and neat user
+    interface, extensively testing the code, interesting discussions
+    and suggestions.
 
-  - Sandeep Menon, for internal surface mesh code.
-
-  - Masashi Imano, for testing the code.
-
-/Takuya OSHIMA <oshima@eng.niigata-u.ac.jp>, MM. DD, 2010
+/Takuya OSHIMA <oshima@eng.niigata-u.ac.jp>, MM. DD, 2011

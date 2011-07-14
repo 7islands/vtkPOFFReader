@@ -8392,7 +8392,8 @@ void vtkOFFReaderPrivate::GetVolFieldAtTimeStep(
     const int nFaces = beI.NFaces;
 
     vtkFloatArray* vData = NULL;
-    if (beI.BoundaryType != vtkFoamBoundaryEntry::GEOMETRICAL)
+    if (beI.BoundaryType != vtkFoamBoundaryEntry::GEOMETRICAL
+        && this->Parent->ForceZeroGradient == 0)
       {
       vtkFoamEntry *vEntry = bEntryI->Dictionary().Lookup("value");
       if (vEntry != NULL) // the boundary has a value entry
@@ -8680,7 +8681,8 @@ void vtkOFFReaderPrivate::GetSurfaceFieldAtTimeStep(
       const int nFaces = beI.NFaces;
       vtkFloatArray* vData = NULL;
 
-      if (beI.BoundaryType != vtkFoamBoundaryEntry::GEOMETRICAL)
+      if (beI.BoundaryType != vtkFoamBoundaryEntry::GEOMETRICAL
+          && this->Parent->ForceZeroGradient == 0)
         {
         vtkFoamEntry *vEntry = bEntryI->Dictionary().Lookup("value");
 
@@ -10078,6 +10080,10 @@ vtkOFFReader::vtkOFFReader()
   this->AddDimensionsToArrayNames = 0;
   this->AddDimensionsToArrayNamesOld = 0;
 
+  // force zero gradient to boundary fields
+  this->ForceZeroGradient = 0;
+  this->ForceZeroGradientOld = 0;
+
   // has mesh changed at this time step or not
   this->MeshChanged = 0;
 
@@ -10135,6 +10141,7 @@ void vtkOFFReader::PrintSelf(ostream& os, vtkIndent indent)
       << this->ListTimeStepsByControlDict << endl;
   os << indent << "AddDimensionsToArrayNames: "
       << this->AddDimensionsToArrayNames << endl;
+  os << indent << "ForceZeroGradient: " << this->ForceZeroGradient << endl;
 
   os << indent << "Case Path: \n";
   this->CasePath->PrintSelf(os, indent.GetNextIndent());
@@ -10187,6 +10194,8 @@ void vtkOFFReader::PrintSelf(ostream& os, vtkIndent indent)
       << this->ListTimeStepsByControlDictOld << endl;
   os << indent << "AddDimensionsToArrayNamesOld: "
       << this->AddDimensionsToArrayNamesOld << endl;
+  os << indent << "ForceZeroGradientOld: " << this->ForceZeroGradientOld
+      << endl;
   os << indent << "MeshChanged: " << this->MeshChanged << endl;
 
   os << indent << "Lagrangian Paths: \n";
@@ -10361,7 +10370,9 @@ int vtkOFFReader::RequestData(vtkInformation *vtkNotUsed(request), vtkInformatio
       || this->Parent->PointDataArraySelection->GetMTime()
           != this->Parent->PointSelectionMTimeOld
       || this->Parent->AddDimensionsToArrayNames
-          != this->Parent->AddDimensionsToArrayNamesOld;
+          != this->Parent->AddDimensionsToArrayNamesOld
+      || this->Parent->ForceZeroGradient
+          != this->Parent->ForceZeroGradientOld;
   const bool recreateLagrangianMesh = (!this->Parent->CacheMesh)
       || this->Parent->PatchDataArraySelection->GetMTime()
           != this->Parent->PatchSelectionMTimeOld
@@ -10722,6 +10733,7 @@ void vtkOFFReader::UpdateStatus()
   this->OutputProcessorPatchesOld = this->OutputProcessorPatches;
   this->ListTimeStepsByControlDictOld = this->ListTimeStepsByControlDict;
   this->AddDimensionsToArrayNamesOld = this->AddDimensionsToArrayNames;
+  this->ForceZeroGradientOld = this->ForceZeroGradient;
 }
 
 //-----------------------------------------------------------------------------

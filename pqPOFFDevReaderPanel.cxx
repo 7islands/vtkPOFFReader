@@ -102,9 +102,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     || (PARAVIEW_VERSION_MAJOR == 3 && PARAVIEW_VERSION_MINOR == 11 \
         && PARAVIEW_VERSION_PATCH >= 1)
 #define PQ_POPENFOAMPANEL_COLLABORATION 1
+#define PQ_POPENFOAMPANEL_UPDATE_RENDER 1
 #include "vtkSMSession.h"
 #else
 #define PQ_POPENFOAMPANEL_COLLABORATION 0
+#define PQ_POPENFOAMPANEL_UPDATE_RENDER 0
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -981,5 +983,9 @@ void pqPOFFReaderPanel::onDataUpdated()
         this->addRegionNameActors(pqv);
         }
       }
+#if PQ_POPENFOAMPANEL_UPDATE_RENDER
+    // Don't know the reason but PV 3.11.1 needs this
+    this->Implementation->Ps->renderAllViews();
+#endif
     }
 }

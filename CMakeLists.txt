@@ -42,24 +42,29 @@ IF(NOT INSOURCE_PLUGIN)
     IF(CMAKE_INSTALL_PREFIX STREQUAL "/usr/local"
         OR CMAKE_INSTALL_PREFIX STREQUAL "C:/Program Files/Project"
         OR CMAKE_INSTALL_PREFIX STREQUAL "C:/Program Files (x86)/Project")
-      IF(ParaView_BINARY_DIR MATCHES ".*/bin")
-        # Installing to the development install of ParaView
-        IF(APPLE)
-          SET(CMAKE_INSTALL_PREFIX "${ParaView_BINARY_DIR}/Plugins")
-        ELSEIF(DEFINED CMAKE_BUILD_TYPE)
-          SET(CMAKE_INSTALL_PREFIX "${ParaView_BINARY_DIR}/plugins")
-        ELSE()
-          # This is not checked yet; may be wrong
-          SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_BINARY_DIR}/Release/plugins")
-        ENDIF()
+      IF(DEFINED ENV{PV_PLUGIN_PATH})
+        # Installing to plugin path defined by PV_PLUGIN_PATH
+        SET(CMAKE_INSTALL_PREFIX "$ENV{PV_PLUGIN_PATH}")
       ELSE()
-        # Installing to the build directory of ParaView
-        IF(APPLE)
-          SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_LIBRARY_DIRS}/Plugins")
-        ELSEIF(DEFINED CMAKE_BUILD_TYPE)
-          SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_LIBRARY_DIRS}/plugins")
+        IF(ParaView_BINARY_DIR MATCHES ".*/bin")
+          # Installing to the development install of ParaView
+          IF(APPLE)
+            SET(CMAKE_INSTALL_PREFIX "${ParaView_BINARY_DIR}/Plugins")
+          ELSEIF(DEFINED CMAKE_BUILD_TYPE)
+            SET(CMAKE_INSTALL_PREFIX "${ParaView_BINARY_DIR}/plugins")
+          ELSE()
+            # This is not checked yet; may be wrong
+            SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_BINARY_DIR}/Release/plugins")
+          ENDIF()
         ELSE()
-          SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_LIBRARY_DIRS}/Release/plugins")
+          # Installing to the build directory of ParaView
+          IF(APPLE)
+            SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_LIBRARY_DIRS}/Plugins")
+          ELSEIF(DEFINED CMAKE_BUILD_TYPE)
+            SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_LIBRARY_DIRS}/plugins")
+          ELSE()
+            SET(CMAKE_INSTALL_PREFIX "${PARAVIEW_LIBRARY_DIRS}/Release/plugins")
+          ENDIF()
         ENDIF()
       ENDIF()
       SET(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH

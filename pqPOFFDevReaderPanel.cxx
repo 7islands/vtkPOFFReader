@@ -71,7 +71,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkSMEnumerationDomain.h"
 #include "vtkSMIntVectorProperty.h"
 #include "vtkSMPropertyHelper.h"
-#include "vtkSMProxyManager.h"
 #include "vtkSMRenderViewProxy.h"
 #include "vtkSMSourceProxy.h"
 #include "vtkSMStringVectorProperty.h"
@@ -82,6 +81,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkProcessModule.h"
 #include "vtkSmartPointer.h"
 #include "vtkVariantArray.h"
+#include "vtksys/DateStamp.h"
 
 // With the refactored views and representations
 // (6b18e29b18e87a4ec39df045419177af561584cf), the region name stuff
@@ -107,6 +107,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 #define PQ_POPENFOAMPANEL_COLLABORATION 0
 #define PQ_POPENFOAMPANEL_UPDATE_RENDER 0
+#endif
+
+// Check if API changes for multi-server support
+// (d0cdf44e00562479730af3b33abf4fada10034a4) is present
+#if vtksys_DATE_STAMP_FULL >= 20111006
+#define PQ_POPENFOAMPANEL_MULTI_SERVER 1
+#include "vtkSMSessionProxyManager.h"
+#else
+#define PQ_POPENFOAMPANEL_MULTI_SERVER 0
+#include "vtkSMProxyManager.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -258,7 +268,12 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
 
   // initialize text properties
   // centered
+#if PQ_POPENFOAMPANEL_MULTI_SERVER
+  vtkSMSessionProxyManager *pxm
+      = this->proxy()->GetSession()->GetSessionProxyManager();
+#else
   vtkSMProxyManager *pxm = this->proxy()->GetProxyManager();
+#endif
   this->Implementation->RegionTextCentered.TakeReference(
       pxm->NewProxy("properties", "TextProperty"));
 #if PQ_POPENFOAMPANEL_COLLABORATION
@@ -885,7 +900,12 @@ void pqPOFFReaderPanel::onDataUpdated()
     const double *centroids = regionCentroids->GetElements();
     const unsigned int nRegions = regionNames->GetNumberOfElements();
     this->Implementation->RegionNameActors->SetNumberOfValues(nRegions);
+#if PQ_POPENFOAMPANEL_MULTI_SERVER
+    vtkSMSessionProxyManager *pxm
+        = this->proxy()->GetSession()->GetSessionProxyManager();
+#else
     vtkSMProxyManager *pxm = this->proxy()->GetProxyManager();
+#endif
     vtkClientServerStream stream;
 #if !PQ_POPENFOAMPANEL_COLLABORATION
     vtkProcessModule *pm = vtkProcessModule::GetProcessModule();

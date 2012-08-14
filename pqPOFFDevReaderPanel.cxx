@@ -81,18 +81,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkProcessModule.h"
 #include "vtkSmartPointer.h"
 #include "vtkVariantArray.h"
-#include "vtksys/DateStamp.h"
-
-// With the refactored views and representations
-// (6b18e29b18e87a4ec39df045419177af561584cf), the region name stuff
-// should ultimately go to the server side by way of e.g. a custom
-// representation...
-#if PARAVIEW_VERSION_MAJOR > 3 \
-    || (PARAVIEW_VERSION_MAJOR == 3 && PARAVIEW_VERSION_MINOR >= 9)
-#define PQ_POPENFOAMPANEL_NEW_VIEWS 1
-#else
-#define PQ_POPENFOAMPANEL_NEW_VIEWS 0
-#endif
 
 // Detect if the ParaView version is 3.11.1 or newer which has
 // Collaboration support
@@ -111,12 +99,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Check if API changes for multi-server support
 // (d0cdf44e00562479730af3b33abf4fada10034a4) is present
-#if vtksys_DATE_STAMP_FULL >= 20111006
+#if PARAVIEW_VERSION_MAJOR > 3 \
+    || (PARAVIEW_VERSION_MAJOR == 3 && PARAVIEW_VERSION_MINOR >= 14)
 #define PQ_POPENFOAMPANEL_MULTI_SERVER 1
 #include "vtkSMSessionProxyManager.h"
 #else
 #define PQ_POPENFOAMPANEL_MULTI_SERVER 0
 #include "vtkSMProxyManager.h"
+#endif
+
+// Check if AddPropToNonCompositedRenderer() is present
+// (Removed by ef2cf1aefd09cd534197dabd7332a6c2c6473e9b)
+#ifndef PQ_POPENFOAMPANEL_NO_ADDPROP
+#define PQ_POPENFOAMPANEL_NO_ADDPROP 0
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -741,20 +736,28 @@ void pqPOFFReaderPanel::addRegionNameActors(pqView *pqv)
       {
       const vtkIdType nRegions
           = this->Implementation->RegionNameActors->GetNumberOfTuples();
-#if PQ_POPENFOAMPANEL_NEW_VIEWS
       // Using AddPropToNonCompositedRenderer() works better when in
       // interaction than using HiddenProps (AddPropToRenderer())
       vtkClientServerStream stream;
-#endif
       for (vtkIdType regionI = 0; regionI < nRegions; regionI++)
         {
-#if PQ_POPENFOAMPANEL_NEW_VIEWS
 #if PQ_POPENFOAMPANEL_COLLABORATION
+#if PQ_POPENFOAMPANEL_NO_ADDPROP
+        stream << vtkClientServerStream::Invoke
+            << VTKOBJECT(renderView) << "GetNonCompositedRenderer"
+            << vtkClientServerStream::End
+            << vtkClientServerStream::Invoke
+            << vtkClientServerStream::LastResult << "AddActor"
+            << VTKOBJECT(vtkSMProxy::SafeDownCast(
+            this->Implementation->RegionNameActors->GetValue(
+            regionI).ToVTKObject())) << vtkClientServerStream::End;
+#else
         stream << vtkClientServerStream::Invoke
             << VTKOBJECT(renderView) << "AddPropToNonCompositedRenderer"
             << VTKOBJECT(vtkSMProxy::SafeDownCast(
             this->Implementation->RegionNameActors->GetValue(
             regionI).ToVTKObject())) << vtkClientServerStream::End;
+#endif
 #else
         stream << vtkClientServerStream::Invoke
             << renderView->GetID() << "AddPropToNonCompositedRenderer"
@@ -762,13 +765,7 @@ void pqPOFFReaderPanel::addRegionNameActors(pqView *pqv)
             this->Implementation->RegionNameActors->GetValue(
             regionI).ToVTKObject())->GetID() << vtkClientServerStream::End;
 #endif
-#else
-        renderView->AddPropToRenderer2D(vtkSMProxy::SafeDownCast(
-            this->Implementation->RegionNameActors->GetValue(
-            regionI).ToVTKObject()));
-#endif
         }
-#if PQ_POPENFOAMPANEL_NEW_VIEWS
 #if PQ_POPENFOAMPANEL_COLLABORATION
       // Invoke ExecuteStream() via session since
       // vtkSMProxy::ExecuteStream() is protected
@@ -777,7 +774,6 @@ void pqPOFFReaderPanel::addRegionNameActors(pqView *pqv)
 #else
       vtkProcessModule::GetProcessModule()->SendStream(
           renderView->GetConnectionID(), renderView->GetServers(), stream);
-#endif
 #endif
       }
     }
@@ -792,18 +788,26 @@ void pqPOFFReaderPanel::removeRegionNameActors(pqView *pqv)
     {
     const vtkIdType nRegions
         = this->Implementation->RegionNameActors->GetNumberOfTuples();
-#if PQ_POPENFOAMPANEL_NEW_VIEWS
     vtkClientServerStream stream;
-#endif
     for (vtkIdType regionI = 0; regionI < nRegions; regionI++)
       {
-#if PQ_POPENFOAMPANEL_NEW_VIEWS
 #if PQ_POPENFOAMPANEL_COLLABORATION
+#if PQ_POPENFOAMPANEL_NO_ADDPROP
+        stream << vtkClientServerStream::Invoke
+            << VTKOBJECT(renderView) << "GetNonCompositedRenderer"
+            << vtkClientServerStream::End
+            << vtkClientServerStream::Invoke
+            << vtkClientServerStream::LastResult << "RemoveActor"
+            << VTKOBJECT(vtkSMProxy::SafeDownCast(
+            this->Implementation->RegionNameActors->GetValue(
+            regionI).ToVTKObject())) << vtkClientServerStream::End;
+#else
       stream << vtkClientServerStream::Invoke
           << VTKOBJECT(renderView) << "RemovePropFromNonCompositedRenderer"
           << VTKOBJECT(vtkSMProxy::SafeDownCast(
           this->Implementation->RegionNameActors->GetValue(
           regionI).ToVTKObject())) << vtkClientServerStream::End;
+#endif
 #else
       stream << vtkClientServerStream::Invoke
           << renderView->GetID() << "RemovePropFromNonCompositedRenderer"
@@ -811,19 +815,12 @@ void pqPOFFReaderPanel::removeRegionNameActors(pqView *pqv)
           this->Implementation->RegionNameActors->GetValue(
           regionI).ToVTKObject())->GetID() << vtkClientServerStream::End;
 #endif
-#else
-      renderView->RemovePropFromRenderer2D(vtkSMProxy::SafeDownCast(
-          this->Implementation->RegionNameActors->GetValue(
-          regionI).ToVTKObject()));
-#endif
       }
-#if PQ_POPENFOAMPANEL_NEW_VIEWS
 #if PQ_POPENFOAMPANEL_COLLABORATION
     renderView->GetSession()->ExecuteStream(renderView->GetLocation(), stream);
 #else
     vtkProcessModule::GetProcessModule()->SendStream(
         renderView->GetConnectionID(), renderView->GetServers(), stream);
-#endif
 #endif
     }
 }
@@ -991,13 +988,9 @@ void pqPOFFReaderPanel::onDataUpdated()
       pqView *pqv = repr->getView();
       // SetUseCache(0) is needed for animation play [>] to work
       // properly in second run in moving mesh
-#if PQ_POPENFOAMPANEL_NEW_VIEWS
       vtkSMProxy *vpxy = pqv->getProxy();
       vtkSMPropertyHelper(vpxy, "UseCache").Set(0);
       vpxy->UpdateProperty("UseCache");
-#else
-      vtkSMViewProxy::SafeDownCast(pqv->getProxy())->SetUseCache(0);
-#endif
       if (repr->isVisible())
         {
         this->addRegionNameActors(pqv);

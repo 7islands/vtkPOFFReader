@@ -48,13 +48,6 @@
 #define VTK_FOAMFILE_OUTBUFSIZE (131072)
 #define VTK_FOAMFILE_INCLUDE_STACK_SIZE (10)
 
-// Avoid a locale problem where period is not interpreted as decimal
-// point when ParaView is compiled with Qt 4.5 and run under certain
-// locales (e.g. de_DE, fr_FR)
-#ifndef VTK_FOAMFILE_LOCALE_WORKAROUND
-#define VTK_FOAMFILE_LOCALE_WORKAROUND 1
-#endif
-
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
@@ -71,8 +64,6 @@
 #if !defined(VTK_FOAMFILE_HAVE_REGEX)
 #include "vtksys/RegularExpression.hxx"
 #endif
-#include <vtkstd/vector>
-#include "vtksys/DateStamp.h"
 #include "vtksys/SystemTools.hxx"
 #include <vtksys/ios/sstream>
 #include "vtk_zlib.h"
@@ -108,7 +99,15 @@
 #include "vtkTriangle.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkVertex.h"
+#include "vtkVersion.h"
 #include "vtkWedge.h"
+
+#if VTK_MAJOR_VERSION >= 6
+#include <vector>
+#define vtkstd std
+#else
+#include <vtkstd/vector>
+#endif
 
 #if !(defined(_WIN32) && !defined(__CYGWIN__) || defined(__LIBCATAMOUNT__))
 // for getpwnam() / getpwuid()
@@ -123,24 +122,6 @@
 #include <math.h>
 // for isalnum() / isspace() / isdigit()
 #include <ctype.h>
-
-// If 1, Use VTK_POLYHEDRON in order to represent polyhedral cells
-// without decomposition. If 0, use VTK_CONVEX_POINT_SET instead
-#if vtksys_DATE_STAMP_FULL >= 20100525
-#define VTK_FOAMFILE_USE_VTK_POLYHEDRON 1
-#else
-#define VTK_FOAMFILE_USE_VTK_POLYHEDRON 0
-#endif
-
-// If 1, reorder symmTensor components so that they match the
-// component label display in ParaView. Otherwise relabel the
-// component panel display in ParaView so that it matches the OpenFOAM
-// symmTensor order.
-#if vtksys_DATE_STAMP_FULL < 20100429
-#define VTK_FOAMFILE_REORDER_SYMMTENSOR_COMPONENTS 1
-#else
-#define VTK_FOAMFILE_REORDER_SYMMTENSOR_COMPONENTS 0
-#endif
 
 // avoid name crashes with the builtin reader
 #define vtkFoamArrayVector vtkNewFoamArrayVector
@@ -1306,16 +1287,7 @@ public:
           return true;
           }
         buf[charI] = '\0';
-#if VTK_FOAMFILE_LOCALE_WORKAROUND
-          {
-          vtksys_ios::istringstream conversionStream(buf);
-          double value;
-          conversionStream >> value;
-          token = value;
-          }
-#else
         token = strtod(buf, NULL);
-#endif
         this->PutBack(c);
         break;
       case ';':
@@ -3597,20 +3569,6 @@ vtkFoamEntryValue::vtkFoamEntryValue(
   switch (this->Superclass::Type)
     {
     case VECTORLIST:
-#if VTK_FOAMFILE_REORDER_SYMMTENSOR_COMPONENTS
-      {
-      vtkFloatArray *fa = vtkFloatArray::SafeDownCast(value.ToVTKObject());
-      if(fa->GetNumberOfComponents() == 6)
-        {
-        // create deepcopies for vtkObjects to avoid duplicated
-        // mainpulation of symmTensor components
-        vtkFloatArray *newfa = vtkFloatArray::New();
-        newfa->DeepCopy(fa);
-        this->Superclass::VtkObjectPtr = newfa;
-        break;
-        }
-      }
-#endif
     case LABELLIST:
     case SCALARLIST:
     case STRINGLIST:
@@ -5196,17 +5154,6 @@ bool vtkOFFReaderPrivate::ListTimeDirectoriesByInstances()
         }
 
       // convert to a number
-#if VTK_FOAMFILE_LOCALE_WORKAROUND
-      vtksys_ios::istringstream timeStream(dir);
-      double timeValue;
-      timeStream >> timeValue;
-
-      // check if the value really was converted to a number
-      if (timeStream.fail() || !timeStream.eof())
-        {
-        continue;
-        }
-#else
       char *endptr;
       double timeValue = strtod(dir.c_str(), &endptr);
       // check if the value really was converted to a number
@@ -5214,7 +5161,6 @@ bool vtkOFFReaderPrivate::ListTimeDirectoriesByInstances()
         {
         continue;
         }
-#endif
 
       // add to the instance list
       this->TimeValues->InsertNextValue(timeValue);
@@ -5839,12 +5785,11 @@ void vtkOFFReaderPrivate::InsertCellsToGrid(
   const int maxNPoints = 256; // assume max number of points per cell
   vtkIdList* cellPoints = vtkIdList::New();
   cellPoints->SetNumberOfIds(maxNPoints);
-#if VTK_FOAMFILE_USE_VTK_POLYHEDRON
+
   // assume max number of nPoints per face + points per cell
   const int maxNPolyPoints = 1024;
   vtkIdList* polyPoints = vtkIdList::New();
   polyPoints->SetNumberOfIds(maxNPolyPoints);
-#endif
 
   const int nCells = (cellList == NULL ? this->NumCells
       : cellList->GetNumberOfTuples());
@@ -6599,7 +6544,7 @@ void vtkOFFReaderPrivate::InsertCellsToGrid(
         const int cellFaces0 = cellFaces[0];
         const int *baseFacePoints = facePoints[cellFaces0];
         const int nBaseFacePoints = facePoints.GetSize(cellFaces0);
-#if VTK_FOAMFILE_USE_VTK_POLYHEDRON
+
         int nPoints = nBaseFacePoints, nPolyPoints = nBaseFacePoints + 1;
         if (nPoints > maxNPoints || nPolyPoints > maxNPolyPoints)
           {
@@ -6699,78 +6644,11 @@ void vtkOFFReaderPrivate::InsertCellsToGrid(
         // create the poly cell and insert it into the mesh
         internalMesh->InsertNextCell(VTK_POLYHEDRON, nPoints,
             cellPoints->GetPointer(0), nCellFaces, polyPoints->GetPointer(0));
-#else
-        int nPoints = nBaseFacePoints;
-        if (nPoints > maxNPoints)
-          {
-          vtkErrorMacro(<< "Too large polyhedron at cellId = " << cellId);
-          this->Parent->SetErrorCode(vtkErrorCode::FileFormatError);
-          cellPoints->Delete();
-          return;
-          }
-        if (this->FaceOwner->GetValue(cellFaces0) == cellId)
-          {
-          // if it is an owner face flip the points
-          // not sure if flipping is necessary but do it anyway
-          for (int j = 0; j < nBaseFacePoints; j++)
-            {
-            cellPoints->SetId(j, baseFacePoints[nBaseFacePoints - 1 - j]);
-            }
-          }
-        else
-          {
-          // add first face to cell points
-          for (int j = 0; j < nBaseFacePoints; j++)
-            {
-            cellPoints->SetId(j, baseFacePoints[j]);
-            }
-          }
-
-        // loop through faces and create a list of all points
-        // j = 1 skip baseFace
-        for (int j = 1; j < nCellFaces; j++)
-          {
-          // remove duplicate points from faces
-          const int cellFacesJ = cellFaces[j];
-          const int *faceJPoints = facePoints[cellFacesJ];
-          const size_t nFaceJPoints = facePoints.GetSize(cellFacesJ);
-          for (size_t k = 0; k < nFaceJPoints; k++)
-            {
-            const int faceJPointK = faceJPoints[k];
-            bool foundDup = false;
-            for (int l = 0; l < nPoints; l++)
-              {
-              if (cellPoints->GetId(l) == faceJPointK)
-                {
-                foundDup = true;
-                break; // look no more
-                }
-              }
-            if (!foundDup)
-              {
-              if (nPoints >= maxNPoints)
-                {
-                vtkErrorMacro(<< "Too large polyhedron at cellId = " << cellId);
-                this->Parent->SetErrorCode(vtkErrorCode::FileFormatError);
-                cellPoints->Delete();
-                return;
-                }
-              cellPoints->SetId(nPoints++, faceJPointK);
-              }
-            }
-          }
-
-        // create the poly cell and insert it into the mesh
-        internalMesh->InsertNextCell(VTK_CONVEX_POINT_SET, nPoints,
-            cellPoints->GetPointer(0));
-#endif
         }
       }
     }
   cellPoints->Delete();
-#if VTK_FOAMFILE_USE_VTK_POLYHEDRON
   polyPoints->Delete();
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -7965,22 +7843,6 @@ vtkFloatArray *vtkOFFReaderPrivate::FillField(vtkFoamEntry *entryPtr,
         data = vtkFloatArray::New();
         data->SetNumberOfComponents(nComponents);
         data->SetNumberOfTuples(nElements);
-#if VTK_FOAMFILE_REORDER_SYMMTENSOR_COMPONENTS
-        // swap the components of symmTensor to match the component
-        // names in paraview
-        // OpenFOAM: XX, XY, XZ, YY, YZ, ZZ
-        // ParaView: XX, YY, ZZ, XY, YZ, XZ
-        // if VTK is sufficiently new then use SetComponentName() instead
-        if (nComponents == 6)
-          {
-          const float symxy = tuple[1], symxz = tuple[2], symyy = tuple[3];
-          const float symzz = tuple[5];
-          tuple[1] = symyy;
-          tuple[2] = symzz;
-          tuple[3] = symxy;
-          tuple[5] = symxz;
-          }
-#endif
         for (int i = 0; i < nElements; i++)
           {
           data->SetTuple(i, tuple);
@@ -8035,28 +7897,6 @@ vtkFloatArray *vtkOFFReaderPrivate::FillField(vtkFoamEntry *entryPtr,
           return NULL;
           }
         }
-
-#if VTK_FOAMFILE_REORDER_SYMMTENSOR_COMPONENTS
-      // swap the components of symmTensor to match the component
-      // names in paraview
-      // OpenFOAM: XX, XY, XZ, YY, YZ, ZZ
-      // ParaView: XX, YY, ZZ, XY, YZ, XZ
-      // if VTK is sufficiently new then use SetComponentName() instead
-      const int nComponents = data->GetNumberOfComponents();
-      if (nComponents == 6)
-        {
-        for (int tupleI = 0; tupleI < nTuples; tupleI++)
-          {
-          float *tuple = data->GetPointer(nComponents * tupleI);
-          const float symxy = tuple[1], symxz = tuple[2], symyy = tuple[3];
-          const float symzz = tuple[5];
-          tuple[1] = symyy;
-          tuple[2] = symzz;
-          tuple[3] = symxy;
-          tuple[5] = symxz;
-          }
-        }
-#endif
       }
     else if (entry.FirstValue().GetType() == vtkFoamToken::EMPTYLIST && nElements <= 0)
       {
@@ -9438,7 +9278,6 @@ void vtkOFFReaderPrivate::AddArrayToFieldData(
   const vtkStdString arrayNameString(arrayName.substr(0, arrayName.find(' ')));
   array->SetName(arrayName.c_str());
 
-#if !VTK_FOAMFILE_REORDER_SYMMTENSOR_COMPONENTS
   switch (array->GetNumberOfComponents())
     {
     case 3:
@@ -9466,7 +9305,6 @@ void vtkOFFReaderPrivate::AddArrayToFieldData(
       array->SetComponentName(8, "zz");
       break;
     }
-#endif
 
   if (array->GetNumberOfComponents() == 1 && arrayNameString == "p")
     {
@@ -10321,6 +10159,15 @@ int vtkOFFReader::RequestData(vtkInformation *vtkNotUsed(request), vtkInformatio
           vtkMultiBlockDataSet::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
   int nSteps = 0;
+#if VTK_MAJOR_VERSION >= 6
+  double requestedTimeValue(0.0);
+  if (outInfo->Has(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP()))
+    {
+    requestedTimeValue
+        = outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP());
+    nSteps = outInfo->Length(vtkStreamingDemandDrivenPipeline::TIME_STEPS());
+    }
+#else
   double *requestedTimeValues = NULL;
   if (outInfo->Has(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEPS()))
     {
@@ -10328,11 +10175,17 @@ int vtkOFFReader::RequestData(vtkInformation *vtkNotUsed(request), vtkInformatio
         = outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEPS());
     nSteps = outInfo->Length(vtkStreamingDemandDrivenPipeline::TIME_STEPS());
     }
+#endif
 
   if (nSteps > 0)
     {
+#if VTK_MAJOR_VERSION >= 6
+    outInfo->Set(vtkDataObject::DATA_TIME_STEP(), requestedTimeValue);
+    this->SetTimeValue(requestedTimeValue);
+#else
     outInfo->Set(vtkDataObject::DATA_TIME_STEPS(), requestedTimeValues, 1);
     this->SetTimeValue(requestedTimeValues[0]);
+#endif
     }
 
   if (this->Parent == this)

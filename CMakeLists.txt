@@ -21,6 +21,8 @@ ELSE()
   SET(INSOURCE_PLUGIN FALSE)
   FIND_PACKAGE(ParaView REQUIRED)
   INCLUDE(${PARAVIEW_USE_FILE})
+  # Required for after-release git-master version of PV 3.14.1
+  INCLUDE(ParaViewPlugins)
 ENDIF()
 
 # Construct version number string and check
@@ -29,9 +31,9 @@ IF(NOT DEFINED PARAVIEW_VERSION)
   SET(PARAVIEW_VERSION "${PARAVIEW_VERSION_MAJOR}.${PARAVIEW_VERSION_MINOR}")
 ENDIF()
 
-IF(PARAVIEW_VERSION VERSION_LESS "3.8")
+IF(PARAVIEW_VERSION VERSION_LESS "3.10")
   MESSAGE(FATAL_ERROR "ParaView version ${PARAVIEW_VERSION} is too old."
-    " The package only supports ParaView 3.8 or later.")
+    " The package only supports ParaView 3.10 or later.")
 ENDIF()
 
 IF(NOT INSOURCE_PLUGIN)
@@ -97,13 +99,6 @@ ENDIF()
 #INCLUDE(${Project_CMAKE_DIR}/FindRegex.cmake)
 INCLUDE("CMake/FindRegex.cmake")
 
-# For ParaView 3.9 or greater, disable locale workaround since it's
-# been fixed in ParaView itself
-
-IF(PARAVIEW_VERSION VERSION_GREATER "3.8")
-  ADD_DEFINITIONS(-DVTK_FOAMFILE_LOCALE_WORKAROUND=0)
-ENDIF()
-
 # Server side plugin
 
 ADD_PARAVIEW_PLUGIN(
@@ -137,6 +132,12 @@ IF(PARAVIEW_BUILD_QT_GUI)
     INCLUDE(${QT_USE_FILE})
   ENDIF()
 
+  # Due to the way the version string is constructed, VERSION_GREATER
+  # does not work
+  IF(PARAVIEW_VERSION_FULL STRGREATER "3.14.1")
+    ADD_DEFINITIONS(-DPQ_POPENFOAMPANEL_NO_ADDPROP=1)
+  ENDIF()
+
   # Additional UI elements for the OFFReader panel
 
   QT4_WRAP_CPP(
@@ -154,6 +155,7 @@ IF(PARAVIEW_BUILD_QT_GUI)
     POFFDevReaderPanelPlugin "1.0"
     REQUIRED_ON_CLIENT
     GUI_INTERFACES ${IFACES}
+    GUI_RESOURCE_FILES OFFReaderGUI.xml
     GUI_SOURCES pqPOFFDevReaderPanel.cxx
     ${MOC_SRCS} ${RCS_SRCS} ${IFACE_SRCS}
     )

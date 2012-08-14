@@ -53,6 +53,7 @@
 #include "vtkUnsignedIntArray.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkVariantArray.h"
+#include "vtkVersion.h"
 
 #include <vtksys/ios/sstream>
 
@@ -462,6 +463,19 @@ int vtkPOFFReader::RequestData(vtkInformation *request,
     }
 
   int nSteps = 0;
+#if VTK_MAJOR_VERSION >= 6
+  double requestedTimeValue(0.0);
+  if (outInfo->Has(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP()))
+    {
+    requestedTimeValue
+        = outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP());
+    nSteps = outInfo->Length(vtkStreamingDemandDrivenPipeline::TIME_STEPS());
+    if (nSteps > 0)
+      {
+      outInfo->Set(vtkDataObject::DATA_TIME_STEP(), requestedTimeValue);
+      }
+    }
+#else
   double *requestedTimeValues = NULL;
   if (outInfo->Has(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEPS()))
     {
@@ -473,6 +487,7 @@ int vtkPOFFReader::RequestData(vtkInformation *request,
       outInfo->Set(vtkDataObject::DATA_TIME_STEPS(), requestedTimeValues, 1);
       }
     }
+#endif
 
   const int nReaders = this->Superclass::Readers->GetNumberOfItems();
   vtkAppendCompositeDataLeaves *append = (this->CaseType == DECOMPOSED_CASE_APPENDED &&
@@ -493,8 +508,13 @@ int vtkPOFFReader::RequestData(vtkInformation *request,
     // even if the child readers themselves are not modified, mark
     // them as modified if "this" has been modified, since they
     // refer to the property of "this"
+#if VTK_MAJOR_VERSION >= 6
+    if ((nSteps > 0 && reader->SetTimeValue(requestedTimeValue))
+        || this->MTimeOld != this->GetMTime())
+#else
     if ((nSteps > 0 && reader->SetTimeValue(requestedTimeValues[0]))
         || this->MTimeOld != this->GetMTime())
+#endif
       {
       reader->Modified();
       }
@@ -1083,7 +1103,11 @@ int vtkPOFFReader::AppendedPolyRegionCentroids(vtkPolyData *input)
           {
           // clean appended polyData
           vtkCleanPolyData *cpd = vtkCleanPolyData::New();
+#if VTK_MAJOR_VERSION >= 6
+          cpd->SetInputData(output);
+#else
           cpd->SetInput(output);
+#endif
           output->FastDelete();
           cpd->Update();
           ret = this->PolyRegionCentroids(cpd->GetOutput());
@@ -1111,7 +1135,11 @@ int vtkPOFFReader::AppendedPolyRegionCentroids(vtkPolyData *input)
       {
       // clean polyData appended by vtkAppendCompositeDataLeaves
       vtkCleanPolyData *cpd = vtkCleanPolyData::New();
+#if VTK_MAJOR_VERSION >= 6
+      cpd->SetInputData(input);
+#else
       cpd->SetInput(input);
+#endif
       cpd->Update();
       const int ret = this->PolyRegionCentroids(cpd->GetOutput());
       cpd->Delete();

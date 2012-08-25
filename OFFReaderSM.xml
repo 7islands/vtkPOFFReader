@@ -359,8 +359,8 @@
     <Property name="UiInterval" show="0"/>
     <Property name="UiRescale" show="0"/>
     <Property name="UiWatch" show="0"/>
-    <ReaderFactory filename_patterns="controlDict fvSchemes fvSolution"
-		   extensions="foam" file_description="OpenFOAM Files" />
+    <ReaderFactory filename_patterns="controlDict"
+		   extensions="foam" file_description="OpenFOAM Case Files" />
   </Hints>
 
 </SourceProxy>

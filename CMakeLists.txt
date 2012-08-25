@@ -21,8 +21,6 @@ ELSE()
   SET(INSOURCE_PLUGIN FALSE)
   FIND_PACKAGE(ParaView REQUIRED)
   INCLUDE(${PARAVIEW_USE_FILE})
-  # Required for after-release git-master version of PV 3.14.1
-  INCLUDE(ParaViewPlugins)
 ENDIF()
 
 # Construct version number string and check

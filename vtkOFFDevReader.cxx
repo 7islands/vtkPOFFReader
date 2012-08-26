@@ -7764,9 +7764,7 @@ vtkFloatArray *vtkOFFReaderPrivate::FillField(vtkFoamEntry *entryPtr,
       }
     }
 
-  // the isUniformFixedValueBC argument is for uniformFixedValue B.C.
-  if (entry.FirstValue().GetIsUniform() == vtkFoamEntryValue::UNIFORM
-      || isUniformFixedValueBC)
+  if (entry.FirstValue().GetIsUniform() == vtkFoamEntryValue::UNIFORM)
     {
     if (entry.FirstValue().GetType() == vtkFoamToken::SCALAR || entry.FirstValue().GetType() == vtkFoamToken::LABEL)
       {
@@ -7855,6 +7853,89 @@ vtkFloatArray *vtkOFFReaderPrivate::FillField(vtkFoamEntry *entryPtr,
                       << ", nComponents = " << nComponents);
         return NULL;
         }
+      }
+    }
+  else if (isUniformFixedValueBC)
+  // the isUniformFixedValueBC argument is for uniformFixedValue B.C.
+  // uniformFixedValueBC does not care about referenceLevel.
+    {
+    if (entry.ToWord() == "constant" || entry.FirstValue().GetType() != vtkFoamToken::WORD)
+      {
+      const int valueI = entry.FirstValue().GetType() != vtkFoamToken::WORD ? 0 : 1;
+      if(entry.size() <= valueI)
+        {
+        vtkErrorMacro(<< "Constant uniform value is missing in entry "
+        << entry.GetKeyword().c_str() << " in " << ioPtr->GetFileName().c_str() << ".");
+        return NULL;
+        }
+      if (entry[valueI]->GetType() == vtkFoamToken::SCALAR
+          || entry[valueI]->GetType() == vtkFoamToken::LABEL)
+        {
+        float num = entry[valueI]->ToFloat();
+        data = vtkFloatArray::New();
+        data->SetNumberOfValues(nElements);
+        for (int i = 0; i < nElements; i++)
+          {
+          data->SetValue(i, num);
+          }
+        }
+      else
+        {
+        float tuple[9];
+        int nComponents;
+        // have to determine the type of vector
+        if (entry[valueI]->GetType() == vtkFoamToken::LABELLIST)
+          {
+          vtkIntArray &ll = entry[valueI]->LabelList();
+          nComponents = ll.GetNumberOfTuples();
+          for (int componentI = 0; componentI < nComponents; componentI++)
+            {
+            tuple[componentI] = static_cast<float>(ll.GetValue(componentI));
+            }
+          }
+        else if (entry[valueI]->GetType() == vtkFoamToken::SCALARLIST)
+          {
+          vtkFloatArray& sl = entry[valueI]->ScalarList();
+          nComponents = sl.GetSize();
+          for (int componentI = 0; componentI < nComponents; componentI++)
+            {
+            tuple[componentI] = sl.GetValue(componentI);
+            }
+          }
+        else
+          {
+          vtkErrorMacro(<< "Wrong list type for uniform field");
+          return NULL;
+          }
+
+        if ((fieldType == "SphericalTensorField" && nComponents == 1)
+            || (fieldType == "VectorField" && nComponents == 3) || (fieldType
+            == "SymmTensorField" && nComponents == 6) || (fieldType
+            == "TensorField" && nComponents == 9))
+          {
+          data = vtkFloatArray::New();
+          data->SetNumberOfComponents(nComponents);
+          data->SetNumberOfTuples(nElements);
+          for (int i = 0; i < nElements; i++)
+            {
+            data->SetTuple(i, tuple);
+            }
+          }
+        else
+          {
+          vtkErrorMacro(<< "Number of components and field class doesn't match "
+                        << "for " << ioPtr->GetFileName().c_str() << ". class = " << className.c_str()
+                        << ", nComponents = " << nComponents);
+          return NULL;
+          }
+        }
+      }
+    else
+      {
+      vtkErrorMacro(<< "Unrecognized uniformFixedValue type " << entry.ToWord()
+                    << " in entry " << entry.GetKeyword().c_str()
+                    << " in " << ioPtr->GetFileName().c_str() << ".");
+      return NULL;
       }
     }
   else if (entry.FirstValue().GetIsUniform() == vtkFoamEntryValue::NONUNIFORM)

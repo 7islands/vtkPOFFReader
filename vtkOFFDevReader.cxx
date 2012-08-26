@@ -10512,8 +10512,7 @@ void vtkOFFReader::CreateCasePath(vtkStdString &casePath,
   // ".foam" extensions.
   // cf. vtkSMReaderFactory::vtkInternals::vtkValue::FillInformation()
   vtkStdString lastCmpt(controlDictPath.substr(pos + 1));
-  if (lastCmpt == "controlDict" || lastCmpt == "fvSchemes"
-      || lastCmpt == "fvSolution")
+  if (lastCmpt == "controlDict")
     {
     // remove trailing filename
     casePath = controlDictPath.substr(0, pos);
@@ -10552,9 +10551,8 @@ void vtkOFFReader::CreateCasePath(vtkStdString &casePath,
     }
   else
     {
-    // if the file is named other than controlDict / fvSchemes /
-    // fvSolution, use the directory containing the file as case
-    // directory
+    // if the file is named other than controlDict, use the directory
+    // containing the file as case directory
     casePath = controlDictPath.substr(0, pos + 1);
     controlDictPath = casePath + "system" + pathSeparator + "controlDict";
     }

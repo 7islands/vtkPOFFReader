@@ -366,8 +366,7 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
       this->proxy()->GetProperty("FileName"), vtkCommand::ModifiedEvent, this,
       SLOT(onFileNameModified()));
   QString smName(this->Implementation->Ps->getSMName());
-  if (smName == "controlDict" || smName == "fvSchemes"
-      || smName == "fvSolution")
+  if (smName == "controlDict")
     {
     this->onFileNameModified(); // fire manually
     }

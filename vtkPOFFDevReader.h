@@ -125,6 +125,14 @@ public:
   // Get the array that holds region name display styles.
   vtkGetObjectMacro(RegionStyles, vtkIntArray);
 
+  // Description:
+  // Instruct the reader that the updated region names has been drawn by the
+  // client side.
+  void RedrewRegionNames()
+  {
+    this->RedrawRegionNames = 0;
+  }
+
 protected:
   vtkPOFFReader();
   ~vtkPOFFReader();

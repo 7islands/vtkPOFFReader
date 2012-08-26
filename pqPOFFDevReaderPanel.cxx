@@ -996,9 +996,19 @@ void pqPOFFReaderPanel::onDataUpdated()
         this->addRegionNameActors(pqv);
         }
       }
-#if PQ_POPENFOAMPANEL_UPDATE_RENDER
-    // Don't know the reason but PV 3.11.1 needs this
-    this->Implementation->Ps->renderAllViews();
+#if PQ_POPENFOAMPANEL_COLLABORATION
+    stream << vtkClientServerStream::Invoke << VTKOBJECT(this->proxy())
+        << "RedrewRegionNames" << vtkClientServerStream::End;
+    // stream is reset after send
+    this->proxy()->GetSession()->ExecuteStream(this->proxy()->GetLocation(),
+        stream);
+#else
+    stream << vtkClientServerStream::Invoke << this->proxy()->GetID()
+        << "RedrewRegionNames" << vtkClientServerStream::End;
+    // stream is reset after send
+    pm->SendStream(this->proxy()->GetConnectionID(),
+        this->proxy()->GetServers(), stream);
 #endif
+
     }
 }

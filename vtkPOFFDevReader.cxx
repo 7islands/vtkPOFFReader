@@ -771,18 +771,18 @@ int vtkPOFFReader::RequestData(vtkInformation *request,
 //-----------------------------------------------------------------------------
 void vtkPOFFReader::CreateRegionArrays(vtkMultiBlockDataSet *output)
 {
-  this->RedrawRegionNames = this->ShowRegionNames != this->ShowRegionNamesOld
+  int recreateRegionArrays = this->ShowRegionNames != this->ShowRegionNamesOld
       || (this->ShowRegionNames && this->Superclass::MeshChanged);
 
   if (this->NumProcesses > 1)
     {
     int recvBuffer;
-    this->Controller->AllReduce(&this->RedrawRegionNames, &recvBuffer, 1,
+    this->Controller->AllReduce(&recreateRegionArrays, &recvBuffer, 1,
         vtkCommunicator::LOGICAL_OR_OP);
-    this->RedrawRegionNames = recvBuffer;
+    recreateRegionArrays = recvBuffer;
     }
 
-  if (this->RedrawRegionNames)
+  if (recreateRegionArrays)
     {
     this->RegionCentroids->Initialize();
     this->RegionNames->Initialize();
@@ -795,6 +795,7 @@ void vtkPOFFReader::CreateRegionArrays(vtkMultiBlockDataSet *output)
       this->RegionNames->Squeeze();
       this->RegionStyles->Squeeze();
       }
+    this->RedrawRegionNames = 1;
     }
 }
 

@@ -27,7 +27,6 @@
 #include "vtkCharArray.h"
 #include "vtkCleanPolyData.h"
 #include "vtkCollection.h"
-#include "vtkCompositeDataIterator.h"
 #include "vtkDataArraySelection.h"
 #include "vtkDataObjectTypes.h"
 #include "vtkDirectory.h"
@@ -54,6 +53,12 @@
 #include "vtkUnstructuredGrid.h"
 #include "vtkVariantArray.h"
 #include "vtkVersion.h"
+
+#if VTK_MAJOR_VERSION >= 6
+#include "vtkDataObjectTreeIterator.h"
+#else
+#include "vtkCompositeDataIterator.h"
+#endif
 
 #include <vtksys/ios/sstream>
 
@@ -545,7 +550,7 @@ int vtkPOFFReader::RequestData(vtkInformation *request,
       }
     else if (nReaders > 1)
       {
-      if (append->GetInput() != NULL)
+      if (append->GetNumberOfInputConnections(0) != 0)
         {
         // reader->RequestInformation() and RequestData() are called
         // for all reader instances without setting UPDATE_TIME_STEPS.
@@ -596,7 +601,12 @@ int vtkPOFFReader::RequestData(vtkInformation *request,
         vtkMultiBlockDataSet *ds = vtkMultiBlockDataSet::SafeDownCast(
             output->GetBlock(static_cast<unsigned int>(pieceId)));
         sendBs->InsertNextValue(ds->GetNumberOfBlocks());
+#if VTK_MAJOR_VERSION >= 6
+        vtkDataObjectTreeIterator *iter
+            = vtkDataObjectTreeIterator::SafeDownCast(ds->NewIterator());
+#else
         vtkCompositeDataIterator *iter = ds->NewIterator();
+#endif
         iter->SkipEmptyNodesOff();
         iter->VisitOnlyLeavesOff();
         for (iter->InitTraversal(); !iter->IsDoneWithTraversal();
@@ -1524,7 +1534,12 @@ void vtkPOFFReader::BroadcastStructure(vtkMultiBlockDataSet *ds, const int start
 
   if (this->ProcessId == 0)
     {
+#if VTK_MAJOR_VERSION >= 6
+    vtkDataObjectTreeIterator *iter
+        = vtkDataObjectTreeIterator::SafeDownCast(ds->NewIterator());
+#else
     vtkCompositeDataIterator *iter = ds->NewIterator();
+#endif
     iter->SkipEmptyNodesOff();
     iter->VisitOnlyLeavesOff();
 

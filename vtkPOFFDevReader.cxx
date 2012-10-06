@@ -602,8 +602,7 @@ int vtkPOFFReader::RequestData(vtkInformation *request,
             output->GetBlock(static_cast<unsigned int>(pieceId)));
         sendBs->InsertNextValue(ds->GetNumberOfBlocks());
 #if VTK_MAJOR_VERSION >= 6
-        vtkDataObjectTreeIterator *iter
-            = vtkDataObjectTreeIterator::SafeDownCast(ds->NewIterator());
+        vtkDataObjectTreeIterator *iter = ds->NewTreeIterator();
 #else
         vtkCompositeDataIterator *iter = ds->NewIterator();
 #endif
@@ -1535,8 +1534,7 @@ void vtkPOFFReader::BroadcastStructure(vtkMultiBlockDataSet *ds, const int start
   if (this->ProcessId == 0)
     {
 #if VTK_MAJOR_VERSION >= 6
-    vtkDataObjectTreeIterator *iter
-        = vtkDataObjectTreeIterator::SafeDownCast(ds->NewIterator());
+    vtkDataObjectTreeIterator *iter = ds->NewTreeIterator();
 #else
     vtkCompositeDataIterator *iter = ds->NewIterator();
 #endif

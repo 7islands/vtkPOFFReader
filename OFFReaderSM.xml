@@ -207,7 +207,8 @@
     number_of_elements="1"
     default_values="1"
     label="Cache mesh"
-    animateable="0">
+    animateable="0"
+    panel_visibility="advanced">
     <BooleanDomain name="bool"/>
     <Documentation>
       Cache the OpenFOAM mesh between GUI selection changes.
@@ -220,7 +221,8 @@
     number_of_elements="1"
     default_values="1"
     label="Decompose polyhedra"
-    animateable="0">
+    animateable="0"
+    panel_visibility="advanced">
     <BooleanDomain name="bool"/>
     <Documentation>
       Decompose polyhedra into tetrahedra and pyramids.
@@ -233,7 +235,8 @@
     number_of_elements="1"
     default_values="0"
     label="Binary files are in single precision"
-    animateable="0">
+    animateable="0"
+    panel_visibility="advanced">
     <BooleanDomain name="bool"/>
     <Documentation>
       Set if binary files are in single precision.
@@ -246,7 +249,8 @@
     number_of_elements="1"
     default_values="0"
     label="List timesteps according to controlDict"
-    animateable="0">
+    animateable="0"
+    panel_visibility="advanced">
     <BooleanDomain name="bool"/>
     <Documentation>
       List time directories listed according to the settings in controlDict.
@@ -259,7 +263,8 @@
     number_of_elements="1"
     default_values="0"
     label="OF 1.3 binary Lagrangian positions"
-    animateable="0">
+    animateable="0"
+    panel_visibility="advanced">
     <BooleanDomain name="bool"/>
     <Documentation>
       Set if Lagrangian positions files are in OpenFOAM 1.3 binary format.
@@ -272,7 +277,8 @@
     number_of_elements="1"
     default_values="0"
     label="Read zones"
-    animateable="0">
+    animateable="0"
+    panel_visibility="advanced">
     <BooleanDomain name="bool"/>
     <Documentation>
       Read point/face/cell-Zones?
@@ -283,7 +289,8 @@
     name="UiInterval"
     number_of_elements="1"
     default_values="60"
-    animateable="0">
+    animateable="0"
+    panel_visibility="never">
     <IntRangeDomain name="range" min="1"/>
     <Documentation>
       Interval of polling case directory for refresh. The property is only used by the client GUI.
@@ -294,7 +301,8 @@
     name="UiRescale"
     number_of_elements="1"
     default_values="1"
-    animateable="0">
+    animateable="0"
+    panel_visibility="never">
     <BooleanDomain name="bool"/>
     <Documentation>
       Rescale the range of color lookup table automatically on refresh. The property is only used by the client GUI.
@@ -305,7 +313,8 @@
     name="UiWatch"
     number_of_elements="1"
     default_values="0"
-    animateable="0">
+    animateable="0"
+    panel_visibility="never">
     <BooleanDomain name="bool"/>
     <Documentation>
       Poll the case directory at the interval specified by UiInterval. The property is only used by the client GUI.

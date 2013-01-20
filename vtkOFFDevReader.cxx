@@ -4834,7 +4834,7 @@ int vtkOFFReaderPrivate::MakeMetaDataAtTimeStep(
 
           if (doProcBoundaries)
             {
-            this->BoundaryDict.ProcBoundaries.push_back(i);
+            this->BoundaryDict.ProcBoundaries.push_back(static_cast<int>(i));
             }
           }
         else
@@ -6758,7 +6758,7 @@ vtkPolyData* vtkOFFReaderPrivate::MakeSurfaceMesh(
   this->InsertFacesToGrid(surfaceMesh, facesPoints, 0, this->NumInternalFaces,
       NULL, facePointsVtkId, NULL, false);
 
-  const int nProcBoundaries = this->BoundaryDict.ProcBoundaries.size();
+  const int nProcBoundaries = static_cast<int>(this->BoundaryDict.ProcBoundaries.size());
   if (nProcBoundaries > 0)
     {
     vtkFoamIOobject io(this->CasePath,

@@ -3798,7 +3798,7 @@ void vtkFoamEntryValue::ReadList(vtkFoamIOobject& io)
         {
         // switch to scalarList
         // LabelListPtr and ScalarListPtr are packed into a single union so
-        // we need a temprary pointer
+        // we need a temporary pointer
         vtkFloatArray* slPtr = vtkFloatArray::New();
         const int size = this->Superclass::LabelListPtr->GetNumberOfTuples();
         slPtr->SetNumberOfValues(size + 1);
@@ -4076,7 +4076,7 @@ void vtkFoamEntry::Read(vtkFoamIOobject& io)
         // keyword nor list type specifier (i. e. `0()';
         // e. g. simpleEngine/0/polyMesh/pointZones) requires special
         // care (one with nonuniform prefix is treated within
-        // vtkFoamEntryValue::read()). still this causes errornous
+        // vtkFoamEntryValue::read()). still this causes erroneous
         // behavior for `0 nonuniform 0()' but this should be extremely
         // rare
         if (lastValue.GetType() == vtkFoamToken::EMPTYLIST && secondLastValue
@@ -6289,7 +6289,7 @@ void vtkOFFReaderPrivate::InsertCellsToGrid(
       internalMesh->InsertNextCell(cellType, nPoints, cellPoints->GetPointer(0));
       }
 
-    // erronous cells
+    // erroneous cells
     else if (cellType == VTK_EMPTY_CELL)
       {
       vtkWarningMacro("Warning: No points in cellId " << cellId);
@@ -6957,7 +6957,7 @@ vtkMultiBlockDataSet *vtkOFFReaderPrivate::MakeBoundaryMesh(
     if (startFace < 0 || nFaces < 0)
       {
       vtkErrorMacro(<<"Neither of startFace " << startFace << " nor nFaces "
-          << nFaces << " can be nagative for patch " << beI.BoundaryName.c_str());
+          << nFaces << " can be negative for patch " << beI.BoundaryName.c_str());
       this->Parent->SetErrorCode(vtkErrorCode::FileFormatError);
       return NULL;
       }

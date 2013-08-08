@@ -519,9 +519,6 @@ public:
     vtkStdString(e)
   {
   }
-  ~vtkFoamError()
-  {
-  }
   // a super-easy way to make use of operator<<()'s defined in
   // vtksys_ios::ostringstream class
   template <class T> vtkFoamError& operator<<(const T& t)
@@ -853,10 +850,6 @@ protected:
   }
 
 public:
-  virtual ~vtkFoamFileStack()
-  {
-  }
-
   const vtkStdString& GetFileName() const
   {
     return this->FileName;

@@ -423,10 +423,15 @@ int vtkPOFFReader::RequestInformation(vtkInformation *request,
     this->Superclass::Refresh = false;
     }
 
+#if VTK_MAJOR_VERSION < 6 || (VTK_MAJOR_VERSION == 6 && VTK_MINOR_VERSION <= 1)
   // it seems MAXIMUM_NUMBER_OF_PIECES must be returned every time
   // RequestInformation() is called
   outputVector->GetInformationObject(0)->Set(vtkStreamingDemandDrivenPipeline::MAXIMUM_NUMBER_OF_PIECES(),
       this->MaximumNumberOfPieces);
+#else
+  outputVector->GetInformationObject(0)->Set(CAN_HANDLE_PIECE_REQUEST(), 1);
+#endif
+
   return ret;
 }
 

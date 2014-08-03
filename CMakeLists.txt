@@ -11,6 +11,7 @@
 #=========================================================================*/
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_POLICY(SET CMP0042 OLD) # Old behavior not using MACOSX_RPATH
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 
 # Find a ParaView build first in order to get its configuration

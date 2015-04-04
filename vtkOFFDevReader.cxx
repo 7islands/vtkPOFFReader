@@ -2003,10 +2003,14 @@ private:
   vtkFoamIOobject();
   void ReadHeader(); // defined later
 public:
-  vtkFoamIOobject(const vtkStdString& casePath, const bool isSinglePrecisionBinary) :
+  vtkFoamIOobject(
+    const vtkStdString& casePath,
+    const bool isSinglePrecisionBinary,
+    const bool isSwapEndianness
+  ) :
     vtkFoamFile(casePath), Format(UNDEFINED), Is13Positions(false),
     IsSinglePrecisionBinary(isSinglePrecisionBinary), 
-    IsSwapEndianness(false),
+    IsSwapEndianness(isSwapEndianness),
     E()
   {
   }
@@ -4491,7 +4495,8 @@ void vtkOFFReaderPrivate::GetFieldNames(const vtkStdString &tempPath,
         != ".old")) && (len < 5 || fieldFile.substr(len - 5) != ".save"))
       {
       vtkFoamIOobject io(this->CasePath,
-          this->Parent->GetIsSinglePrecisionBinary() != 0);
+          this->Parent->GetIsSinglePrecisionBinary() != 0,
+          this->Parent->GetIsSwapEndianness() != 0);
       if (io.Open(tempPath + "/" + fieldFile)) // file exists and readable
         {
         const vtkStdString& cn = io.GetClassName();
@@ -4571,7 +4576,8 @@ void vtkOFFReaderPrivate::LocateLagrangianClouds(
           && directory->FileIsDirectory(fileNameI.c_str()))
         {
         vtkFoamIOobject io(this->CasePath,
-            this->Parent->GetIsSinglePrecisionBinary() != 0);
+            this->Parent->GetIsSinglePrecisionBinary() != 0,
+            this->Parent->GetIsSwapEndianness() != 0);
         const vtkStdString subCloudName(this->RegionPrefix() + "lagrangian/"
             + fileNameI);
         const vtkStdString subCloudFullPath(timePath + "/" + subCloudName);
@@ -4602,7 +4608,8 @@ void vtkOFFReaderPrivate::LocateLagrangianClouds(
     if (!isSubCloud)
       {
       vtkFoamIOobject io(this->CasePath,
-          this->Parent->GetIsSinglePrecisionBinary() != 0);
+          this->Parent->GetIsSinglePrecisionBinary() != 0,
+          this->Parent->GetIsSwapEndianness() != 0);
       const vtkStdString cloudName(this->RegionPrefix() + "lagrangian");
       const vtkStdString cloudFullPath(timePath + "/" + cloudName);
       if ((io.Open(cloudFullPath + "/positions") || io.Open(cloudFullPath
@@ -5229,7 +5236,8 @@ bool vtkOFFReaderPrivate::MakeInformationVector(
   if (this->Parent->GetListTimeStepsByControlDict())
     {
     vtkFoamIOobject io(this->CasePath,
-        this->Parent->GetIsSinglePrecisionBinary() != 0);
+        this->Parent->GetIsSinglePrecisionBinary() != 0,
+        this->Parent->GetIsSwapEndianness() != 0);
 
     // open and check if controlDict is readable
     if (!io.Open(controlDictPath))
@@ -5323,7 +5331,8 @@ void vtkOFFReaderPrivate::AppendMeshDirToArray(
     const vtkStdString &fileName, const int timeI)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkStdString filePath(path + fileName);
   if (io.Open(filePath) || io.Open(filePath + ".gz"))
     {
@@ -5389,7 +5398,8 @@ vtkFloatArray* vtkOFFReaderPrivate::ReadPointsFile()
       this->CurrentTimeRegionMeshPath(this->PolyMeshPointsDir) + "points";
 
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   if (!(io.Open(pointPath) || io.Open(pointPath + ".gz")))
     {
     vtkErrorMacro(<<"Error opening " << io.GetFileName().c_str() << ": "
@@ -5428,7 +5438,8 @@ vtkFoamIntVectorVector * vtkOFFReaderPrivate::ReadFacesFile(
   const vtkStdString facePath(facePathIn + "faces");
 
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   if (!(io.Open(facePath) || io.Open(facePath + ".gz")))
     {
     vtkErrorMacro(<<"Error opening " << io.GetFileName().c_str() << ": "
@@ -5466,7 +5477,8 @@ vtkFoamIntVectorVector * vtkOFFReaderPrivate::ReadOwnerNeighborFiles(
     const vtkStdString &ownerNeighborPath, vtkFoamIntVectorVector *facePoints)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkStdString ownerPath(ownerNeighborPath + "owner");
   if (io.Open(ownerPath) || io.Open(ownerPath + ".gz"))
     {
@@ -6754,7 +6766,8 @@ vtkPolyData* vtkOFFReaderPrivate::MakeSurfaceMesh(
   if (nProcBoundaries > 0)
     {
     vtkFoamIOobject io(this->CasePath,
-        this->Parent->GetIsSinglePrecisionBinary() != 0);
+        this->Parent->GetIsSinglePrecisionBinary() != 0,
+        this->Parent->GetIsSwapEndianness() != 0);
     vtkStdString faceProcPath(meshDir + "faceProcAddressing");
     if (!(io.Open(faceProcPath) || io.Open(faceProcPath + ".gz")))
       {
@@ -8099,7 +8112,8 @@ void vtkOFFReaderPrivate::GetVolFieldAtTimeStep(
     const vtkStdString &varName)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkFoamDict dict;
   if (!this->ReadFieldFile(&io, &dict, varName,
       this->Parent->CellDataArraySelection))
@@ -8477,7 +8491,8 @@ void vtkOFFReaderPrivate::GetSurfaceFieldAtTimeStep(
     const vtkStdString &varName)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkFoamDict dict;
   if (!this->ReadFieldFile(&io, &dict, varName,
       this->Parent->SurfaceDataArraySelection))
@@ -8726,7 +8741,8 @@ void vtkOFFReaderPrivate::GetPointFieldAtTimeStep(
     const vtkStdString &varName)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkFoamDict dict;
   if (!this->ReadFieldFile(&io, &dict, varName,
       this->Parent->PointDataArraySelection))
@@ -8898,7 +8914,8 @@ vtkMultiBlockDataSet* vtkOFFReaderPrivate::MakeLagrangianMesh()
     this->SetBlockName(lagrangianMesh, blockI, pathI.substr(pathI.rfind('/') + 1).c_str());
 
     vtkFoamIOobject io(this->CasePath,
-        this->Parent->GetIsSinglePrecisionBinary() != 0);
+        this->Parent->GetIsSinglePrecisionBinary() != 0,
+        this->Parent->GetIsSwapEndianness() != 0);
     if (!(io.Open(positionsPath) || io.Open(positionsPath + ".gz")))
       {
       meshI->Delete();
@@ -8950,7 +8967,8 @@ vtkMultiBlockDataSet* vtkOFFReaderPrivate::MakeLagrangianMesh()
           + this->LagrangianFieldFiles->GetValue(fieldI));
 
       vtkFoamIOobject io2(this->CasePath,
-          this->Parent->GetIsSinglePrecisionBinary() != 0);
+          this->Parent->GetIsSinglePrecisionBinary() != 0,
+          this->Parent->GetIsSwapEndianness() != 0);
       if (!io2.Open(varPath))
         {
         // if the field file doesn't exist we simply return without
@@ -9028,7 +9046,8 @@ vtkFoamDict* vtkOFFReaderPrivate::GatherBlocks(const char* typeIn,
       this->TimeRegionMeshPath(this->PolyMeshFacesDir, timeStep) + type;
 
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   if (!(io.Open(blockPath) || io.Open(blockPath + ".gz")))
     {
     return NULL;

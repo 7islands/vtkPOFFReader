@@ -30,6 +30,9 @@
 // * Minor performance enhancements
 // by Philippose Rajan (sarith@rocketmail.com)
 //
+// * Added the IsSwapEndianness option
+// by Bruno Santos (wyldckat@gmail.com)
+//
 // Disclaimer:
 // OPENFOAM(R) is a registered trade mark of OpenCFD Limited, the
 // producer of the OpenFOAM software and owner of the OPENFOAM(R) and

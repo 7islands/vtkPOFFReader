@@ -35,7 +35,10 @@
 // support, parallelization support for decomposed cases in
 // conjunction with vtkPOFFReader, et. al. by Takuya Oshima of
 // Niigata University, Japan (oshima@eng.niigata-u.ac.jp).
-
+//
+// * Added the IsSwapEndianness option
+// by Bruno Santos (wyldckat@gmail.com)
+//
 // .SECTION Disclaimer
 // OPENFOAM(R) is a registered trade mark of OpenCFD Limited, the
 // producer of the OpenFOAM software and owner of the OPENFOAM(R) and

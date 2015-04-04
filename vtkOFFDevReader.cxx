@@ -30,6 +30,9 @@
 // * Minor performance enhancements
 // by Philippose Rajan (sarith@rocketmail.com)
 //
+// * Added the IsSwapEndianness option
+// by Bruno Santos (wyldckat@gmail.com)
+//
 // Disclaimer:
 // OPENFOAM(R) is a registered trade mark of OpenCFD Limited, the
 // producer of the OpenFOAM software and owner of the OPENFOAM(R) and
@@ -1593,6 +1596,23 @@ public:
       }
   }
 
+  //method for swapping the byte order, based on the wordsize
+  void SwapEndianness(unsigned char *buf, const int len, const int wordsize)
+  {
+    char c[32]; //big buffer, just in case
+    unsigned char *pbuf = buf;
+    const int wordsize_1 = wordsize - 1;
+
+    for (int j = 0; j < len; j+=wordsize, pbuf+=wordsize)
+      {
+      memcpy(c, pbuf, wordsize);
+      for (int k = 0; k < wordsize; k++)
+        {
+          pbuf[k] = c[wordsize_1-k];
+        }
+      }
+  }
+  
   int ReadIntValue();
   float ReadFloatValue();
 };
@@ -1997,14 +2017,21 @@ private:
   vtkStdString HeaderClassName;
   bool Is13Positions;
   bool IsSinglePrecisionBinary;
+  bool IsSwapEndianness;
   vtkFoamError E;
 
   vtkFoamIOobject();
   void ReadHeader(); // defined later
 public:
-  vtkFoamIOobject(const vtkStdString& casePath, const bool isSinglePrecisionBinary) :
+  vtkFoamIOobject(
+    const vtkStdString& casePath,
+    const bool isSinglePrecisionBinary,
+    const bool isSwapEndianness
+  ) :
     vtkFoamFile(casePath), Format(UNDEFINED), Is13Positions(false),
-    IsSinglePrecisionBinary(isSinglePrecisionBinary), E()
+    IsSinglePrecisionBinary(isSinglePrecisionBinary), 
+    IsSwapEndianness(isSwapEndianness),
+    E()
   {
   }
   ~vtkFoamIOobject()
@@ -2076,6 +2103,10 @@ public:
   bool GetIsSinglePrecisionBinary() const
   {
     return this->IsSinglePrecisionBinary;
+  }
+  bool GetIsSwapEndianness() const
+  {
+    return this->IsSwapEndianness;
   }
 };
 
@@ -2155,6 +2186,12 @@ public:
     {
       io.Read(reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)), size
           * sizeof(primitiveT));
+      if(io.GetIsSwapEndianness())
+        {
+        io.SwapEndianness(
+          reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)), size
+          * sizeof(primitiveT), sizeof(primitiveT));
+        }
     }
     void ReadValue(vtkFoamIOobject&, vtkFoamToken& currToken)
     {
@@ -2244,6 +2281,10 @@ public:
           {
           io.ReadExpecting('(');
           io.Read(buffer, nBytes);
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(buffer, nBytes, sizeof(double));
+            }
           this->Ptr->SetTuple(i, reinterpret_cast<double *>(buffer));
           io.ReadExpecting(')');
           }
@@ -2254,6 +2295,12 @@ public:
           {
           io.Read(reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
               sizeof(float) * nComponents * size);
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(
+              reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
+              sizeof(float) * nComponents * size, sizeof(float));
+            }
           }
         else
           {
@@ -2298,6 +2345,12 @@ public:
             float *destination = this->Ptr->GetPointer(i * unitSize);
             io.Read(reinterpret_cast<unsigned char *>(buffer),
                 sizeof(double) * unitSize);
+            if(io.GetIsSwapEndianness())
+              {
+              io.SwapEndianness(
+                reinterpret_cast<unsigned char *>(buffer),
+                sizeof(double) * unitSize, sizeof(double));
+              }
             for (int j = 0; j < unitSize; j++)
               {
               destination[j] = static_cast<float>(buffer[j]);
@@ -2307,6 +2360,12 @@ public:
           float *destination = this->Ptr->GetPointer(nDivs * unitSize);
           io.Read(reinterpret_cast<unsigned char *>(buffer),
               sizeof(double) * remainingSize);
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(
+              reinterpret_cast<unsigned char *>(buffer),
+              sizeof(double) * remainingSize, sizeof(double));
+            }
           for (int j = 0; j < remainingSize; j++)
             {
             destination[j] = static_cast<float>(buffer[j]);
@@ -2532,6 +2591,12 @@ public:
               io.ReadExpecting('(');
               io.Read(reinterpret_cast<unsigned char*>(listI), sizeJ
                   * sizeof(int));
+              if(io.GetIsSwapEndianness())
+                {
+                io.SwapEndianness(
+                  reinterpret_cast<unsigned char*>(listI), sizeJ
+                  * sizeof(int), sizeof(int));
+                }
               io.ReadExpecting(')');
               }
             }
@@ -2605,6 +2670,12 @@ public:
           io.ReadExpecting('(');
           io.Read(reinterpret_cast<unsigned char*>(array->GetPointer(0)),
               sizeI * sizeof(int));
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(
+              reinterpret_cast<unsigned char*>(array->GetPointer(0)),
+              sizeI * sizeof(int), sizeof(int));
+            }
           io.ReadExpecting(')');
           }
         }
@@ -2678,6 +2749,12 @@ void vtkFoamEntryValue::listTraits<vtkFloatArray, float>::ReadBinaryList(
     {
     io.Read(reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
         sizeof(float) * size);
+    if(io.GetIsSwapEndianness())
+      {
+      io.SwapEndianness(
+        reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
+        sizeof(float) * size, sizeof(float));
+      }
     }
   else
     {
@@ -2714,6 +2791,12 @@ void vtkFoamEntryValue::listTraits<vtkFloatArray, float>::ReadBinaryList(
       float *destination = this->Ptr->GetPointer(i * bufferUnit);
       io.Read(reinterpret_cast<unsigned char *>(buffer),
           sizeof(double) * bufferUnit);
+      if(io.GetIsSwapEndianness())
+        {
+        io.SwapEndianness(
+          reinterpret_cast<unsigned char *>(buffer),
+          sizeof(double) * bufferUnit, sizeof(double));
+        }
       for (int j = 0; j < bufferUnit; j++)
         {
         destination[j] = static_cast<float>(buffer[j]);
@@ -2723,6 +2806,12 @@ void vtkFoamEntryValue::listTraits<vtkFloatArray, float>::ReadBinaryList(
     float *destination = this->Ptr->GetPointer(nDivs * bufferUnit);
     io.Read(reinterpret_cast<unsigned char *>(buffer),
         sizeof(double) * remainingSize);
+    if(io.GetIsSwapEndianness())
+      {
+      io.SwapEndianness(
+        reinterpret_cast<unsigned char *>(buffer),
+        sizeof(double) * remainingSize, sizeof(double));
+      }
     for (int j = 0; j < remainingSize; j++)
       {
       destination[j] = static_cast<float>(buffer[j]);
@@ -4484,7 +4573,8 @@ void vtkOFFReaderPrivate::GetFieldNames(const vtkStdString &tempPath,
         != ".old")) && (len < 5 || fieldFile.substr(len - 5) != ".save"))
       {
       vtkFoamIOobject io(this->CasePath,
-          this->Parent->GetIsSinglePrecisionBinary() != 0);
+          this->Parent->GetIsSinglePrecisionBinary() != 0,
+          this->Parent->GetIsSwapEndianness() != 0);
       if (io.Open(tempPath + "/" + fieldFile)) // file exists and readable
         {
         const vtkStdString& cn = io.GetClassName();
@@ -4564,7 +4654,8 @@ void vtkOFFReaderPrivate::LocateLagrangianClouds(
           && directory->FileIsDirectory(fileNameI.c_str()))
         {
         vtkFoamIOobject io(this->CasePath,
-            this->Parent->GetIsSinglePrecisionBinary() != 0);
+            this->Parent->GetIsSinglePrecisionBinary() != 0,
+            this->Parent->GetIsSwapEndianness() != 0);
         const vtkStdString subCloudName(this->RegionPrefix() + "lagrangian/"
             + fileNameI);
         const vtkStdString subCloudFullPath(timePath + "/" + subCloudName);
@@ -4595,7 +4686,8 @@ void vtkOFFReaderPrivate::LocateLagrangianClouds(
     if (!isSubCloud)
       {
       vtkFoamIOobject io(this->CasePath,
-          this->Parent->GetIsSinglePrecisionBinary() != 0);
+          this->Parent->GetIsSinglePrecisionBinary() != 0,
+          this->Parent->GetIsSwapEndianness() != 0);
       const vtkStdString cloudName(this->RegionPrefix() + "lagrangian");
       const vtkStdString cloudFullPath(timePath + "/" + cloudName);
       if ((io.Open(cloudFullPath + "/positions") || io.Open(cloudFullPath
@@ -5222,7 +5314,8 @@ bool vtkOFFReaderPrivate::MakeInformationVector(
   if (this->Parent->GetListTimeStepsByControlDict())
     {
     vtkFoamIOobject io(this->CasePath,
-        this->Parent->GetIsSinglePrecisionBinary() != 0);
+        this->Parent->GetIsSinglePrecisionBinary() != 0,
+        this->Parent->GetIsSwapEndianness() != 0);
 
     // open and check if controlDict is readable
     if (!io.Open(controlDictPath))
@@ -5316,7 +5409,8 @@ void vtkOFFReaderPrivate::AppendMeshDirToArray(
     const vtkStdString &fileName, const int timeI)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkStdString filePath(path + fileName);
   if (io.Open(filePath) || io.Open(filePath + ".gz"))
     {
@@ -5382,7 +5476,8 @@ vtkFloatArray* vtkOFFReaderPrivate::ReadPointsFile()
       this->CurrentTimeRegionMeshPath(this->PolyMeshPointsDir) + "points";
 
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   if (!(io.Open(pointPath) || io.Open(pointPath + ".gz")))
     {
     vtkErrorMacro(<<"Error opening " << io.GetFileName().c_str() << ": "
@@ -5421,7 +5516,8 @@ vtkFoamIntVectorVector * vtkOFFReaderPrivate::ReadFacesFile(
   const vtkStdString facePath(facePathIn + "faces");
 
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   if (!(io.Open(facePath) || io.Open(facePath + ".gz")))
     {
     vtkErrorMacro(<<"Error opening " << io.GetFileName().c_str() << ": "
@@ -5459,7 +5555,8 @@ vtkFoamIntVectorVector * vtkOFFReaderPrivate::ReadOwnerNeighborFiles(
     const vtkStdString &ownerNeighborPath, vtkFoamIntVectorVector *facePoints)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkStdString ownerPath(ownerNeighborPath + "owner");
   if (io.Open(ownerPath) || io.Open(ownerPath + ".gz"))
     {
@@ -6747,7 +6844,8 @@ vtkPolyData* vtkOFFReaderPrivate::MakeSurfaceMesh(
   if (nProcBoundaries > 0)
     {
     vtkFoamIOobject io(this->CasePath,
-        this->Parent->GetIsSinglePrecisionBinary() != 0);
+        this->Parent->GetIsSinglePrecisionBinary() != 0,
+        this->Parent->GetIsSwapEndianness() != 0);
     vtkStdString faceProcPath(meshDir + "faceProcAddressing");
     if (!(io.Open(faceProcPath) || io.Open(faceProcPath + ".gz")))
       {
@@ -8092,7 +8190,8 @@ void vtkOFFReaderPrivate::GetVolFieldAtTimeStep(
     const vtkStdString &varName)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkFoamDict dict;
   if (!this->ReadFieldFile(&io, &dict, varName,
       this->Parent->CellDataArraySelection))
@@ -8470,7 +8569,8 @@ void vtkOFFReaderPrivate::GetSurfaceFieldAtTimeStep(
     const vtkStdString &varName)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkFoamDict dict;
   if (!this->ReadFieldFile(&io, &dict, varName,
       this->Parent->SurfaceDataArraySelection))
@@ -8719,7 +8819,8 @@ void vtkOFFReaderPrivate::GetPointFieldAtTimeStep(
     const vtkStdString &varName)
 {
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   vtkFoamDict dict;
   if (!this->ReadFieldFile(&io, &dict, varName,
       this->Parent->PointDataArraySelection))
@@ -8891,7 +8992,8 @@ vtkMultiBlockDataSet* vtkOFFReaderPrivate::MakeLagrangianMesh()
     this->SetBlockName(lagrangianMesh, blockI, pathI.substr(pathI.rfind('/') + 1).c_str());
 
     vtkFoamIOobject io(this->CasePath,
-        this->Parent->GetIsSinglePrecisionBinary() != 0);
+        this->Parent->GetIsSinglePrecisionBinary() != 0,
+        this->Parent->GetIsSwapEndianness() != 0);
     if (!(io.Open(positionsPath) || io.Open(positionsPath + ".gz")))
       {
       meshI->Delete();
@@ -8943,7 +9045,8 @@ vtkMultiBlockDataSet* vtkOFFReaderPrivate::MakeLagrangianMesh()
           + this->LagrangianFieldFiles->GetValue(fieldI));
 
       vtkFoamIOobject io2(this->CasePath,
-          this->Parent->GetIsSinglePrecisionBinary() != 0);
+          this->Parent->GetIsSinglePrecisionBinary() != 0,
+          this->Parent->GetIsSwapEndianness() != 0);
       if (!io2.Open(varPath))
         {
         // if the field file doesn't exist we simply return without
@@ -9021,7 +9124,8 @@ vtkFoamDict* vtkOFFReaderPrivate::GatherBlocks(const char* typeIn,
       this->TimeRegionMeshPath(this->PolyMeshFacesDir, timeStep) + type;
 
   vtkFoamIOobject io(this->CasePath,
-      this->Parent->GetIsSinglePrecisionBinary() != 0);
+      this->Parent->GetIsSinglePrecisionBinary() != 0,
+      this->Parent->GetIsSwapEndianness() != 0);
   if (!(io.Open(blockPath) || io.Open(blockPath + ".gz")))
     {
     return NULL;
@@ -9967,6 +10071,10 @@ vtkOFFReader::vtkOFFReader()
   this->IsSinglePrecisionBinary = 0; // turned off by default
   this->IsSinglePrecisionBinaryOld = 0;
 
+  // for reading binary format with swapped endianness
+  this->IsSwapEndianness = 0; // turned off by default
+  this->IsSwapEndiannessOld = 0;
+
   // for reading zones
   this->ReadZones = 0; // turned off by default
   this->ReadZonesOld = 0;
@@ -10038,6 +10146,8 @@ void vtkOFFReader::PrintSelf(ostream& os, vtkIndent indent)
       << endl;
   os << indent << "IsSinglePrecisionBinary: " << this->IsSinglePrecisionBinary
       << endl;
+  os << indent << "IsSwapEndianness: " << this->IsSwapEndianness
+      << endl;
   os << indent << "ReadZones: " << this->ReadZones << endl;
   os << indent << "OutputProcessorPatches: " << this->OutputProcessorPatches << endl;
   os << indent << "ListTimeStepsByControlDict: "
@@ -10091,6 +10201,8 @@ void vtkOFFReader::PrintSelf(ostream& os, vtkIndent indent)
       << endl;
   os << indent << "IsSinglePrecisionBinaryOld: "
       << this->IsSinglePrecisionBinaryOld << endl;
+  os << indent << "IsSwapEndiannessOld: "
+      << this->IsSwapEndiannessOld << endl;
   os << indent << "ReadZonesOld: " << this->ReadZonesOld << endl;
   os << indent << "OutputProcessorPatchesOld: " << this->OutputProcessorPatchesOld << endl;
   os << indent << "ListTimeStepsByControlDictOld: "
@@ -10645,6 +10757,7 @@ void vtkOFFReader::UpdateStatus()
   this->DecomposePolyhedraOld = this->DecomposePolyhedra;
   this->PositionsIsIn13FormatOld = this->PositionsIsIn13Format;
   this->IsSinglePrecisionBinaryOld = this->IsSinglePrecisionBinary;
+  this->IsSwapEndiannessOld = this->IsSwapEndianness;
   this->ReadZonesOld = this->ReadZones;
   this->OutputProcessorPatchesOld = this->OutputProcessorPatches;
   this->ListTimeStepsByControlDictOld = this->ListTimeStepsByControlDict;

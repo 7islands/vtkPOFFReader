@@ -244,6 +244,20 @@
   </IntVectorProperty>
 
   <IntVectorProperty
+    name="IsSwapEndianness"
+    command="SetIsSwapEndianness"
+    number_of_elements="1"
+    default_values="0"
+    label="Swap Endianness of the binary data"
+    animateable="0"
+    panel_visibility="advanced">
+    <BooleanDomain name="bool"/>
+    <Documentation>
+      Set if it should load binary data with swapped Endianness.
+    </Documentation>
+  </IntVectorProperty>
+
+  <IntVectorProperty
     name="ListTimeStepsByControlDict"
     command="SetListTimeStepsByControlDict"
     number_of_elements="1"

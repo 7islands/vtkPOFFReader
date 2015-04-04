@@ -267,6 +267,13 @@ public:
   vtkSetMacro(IsSinglePrecisionBinary, int);
   vtkGetMacro(IsSinglePrecisionBinary, int);
   vtkBooleanMacro(IsSinglePrecisionBinary, int);
+  
+  // Option for reading binary format with swapped endianness
+  // Description:
+  // Set/Get whether the binary files should be loaded with swapped endianness.
+  vtkSetMacro(IsSwapEndianness, int);
+  vtkGetMacro(IsSwapEndianness, int);
+  vtkBooleanMacro(IsSwapEndianness, int);
 
   // Description:
   // Determine if time directories are to be listed according to controlDict.
@@ -338,6 +345,9 @@ private:
   // for reading single precision binary format
   int IsSinglePrecisionBinary;
 
+  // for swapping endianess on binary format
+  int IsSwapEndianness;
+
   // for reading point/face/cell-Zones
   int ReadZones;
 
@@ -381,6 +391,7 @@ private:
   int DecomposePolyhedraOld;
   int PositionsIsIn13FormatOld;
   int IsSinglePrecisionBinaryOld;
+  int IsSwapEndiannessOld;
   int ReadZonesOld;
   processorPatchType OutputProcessorPatchesOld;
   int ListTimeStepsByControlDictOld;

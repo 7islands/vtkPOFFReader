@@ -1997,6 +1997,7 @@ private:
   vtkStdString HeaderClassName;
   bool Is13Positions;
   bool IsSinglePrecisionBinary;
+  bool IsSwapEndianness;
   vtkFoamError E;
 
   vtkFoamIOobject();
@@ -2004,7 +2005,9 @@ private:
 public:
   vtkFoamIOobject(const vtkStdString& casePath, const bool isSinglePrecisionBinary) :
     vtkFoamFile(casePath), Format(UNDEFINED), Is13Positions(false),
-    IsSinglePrecisionBinary(isSinglePrecisionBinary), E()
+    IsSinglePrecisionBinary(isSinglePrecisionBinary), 
+    IsSwapEndianness(false),
+    E()
   {
   }
   ~vtkFoamIOobject()
@@ -2076,6 +2079,10 @@ public:
   bool GetIsSinglePrecisionBinary() const
   {
     return this->IsSinglePrecisionBinary;
+  }
+  bool GetIsSwapEndianness() const
+  {
+    return this->IsSwapEndianness;
   }
 };
 
@@ -9967,6 +9974,10 @@ vtkOFFReader::vtkOFFReader()
   this->IsSinglePrecisionBinary = 0; // turned off by default
   this->IsSinglePrecisionBinaryOld = 0;
 
+  // for reading binary format with swapped endianness
+  this->IsSwapEndianness = 0; // turned off by default
+  this->IsSwapEndiannessOld = 0;
+
   // for reading zones
   this->ReadZones = 0; // turned off by default
   this->ReadZonesOld = 0;
@@ -10038,6 +10049,8 @@ void vtkOFFReader::PrintSelf(ostream& os, vtkIndent indent)
       << endl;
   os << indent << "IsSinglePrecisionBinary: " << this->IsSinglePrecisionBinary
       << endl;
+  os << indent << "IsSwapEndianness: " << this->IsSwapEndianness
+      << endl;
   os << indent << "ReadZones: " << this->ReadZones << endl;
   os << indent << "OutputProcessorPatches: " << this->OutputProcessorPatches << endl;
   os << indent << "ListTimeStepsByControlDict: "
@@ -10091,6 +10104,8 @@ void vtkOFFReader::PrintSelf(ostream& os, vtkIndent indent)
       << endl;
   os << indent << "IsSinglePrecisionBinaryOld: "
       << this->IsSinglePrecisionBinaryOld << endl;
+  os << indent << "IsSwapEndiannessOld: "
+      << this->IsSwapEndiannessOld << endl;
   os << indent << "ReadZonesOld: " << this->ReadZonesOld << endl;
   os << indent << "OutputProcessorPatchesOld: " << this->OutputProcessorPatchesOld << endl;
   os << indent << "ListTimeStepsByControlDictOld: "
@@ -10645,6 +10660,7 @@ void vtkOFFReader::UpdateStatus()
   this->DecomposePolyhedraOld = this->DecomposePolyhedra;
   this->PositionsIsIn13FormatOld = this->PositionsIsIn13Format;
   this->IsSinglePrecisionBinaryOld = this->IsSinglePrecisionBinary;
+  this->IsSwapEndiannessOld = this->IsSwapEndianness;
   this->ReadZonesOld = this->ReadZones;
   this->OutputProcessorPatchesOld = this->OutputProcessorPatches;
   this->ListTimeStepsByControlDictOld = this->ListTimeStepsByControlDict;

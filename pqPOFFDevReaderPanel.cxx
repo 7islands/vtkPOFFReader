@@ -405,6 +405,7 @@ pqPOFFReaderPanel::pqPOFFReaderPanel(pqProxy *pxy, QWidget *p)
   l2->addWidget(this->findChild<QCheckBox*>("CacheMesh"));
   l2->addWidget(this->findChild<QCheckBox*>("DecomposePolyhedra"));
   l2->addWidget(this->findChild<QCheckBox*>("IsSinglePrecisionBinary"));
+  l2->addWidget(this->findChild<QCheckBox*>("IsSwapEndianness"));
   l2->addWidget(this->findChild<QCheckBox*>("ListTimeStepsByControlDict"));
   l2->addWidget(this->findChild<QCheckBox*>("PositionsIsIn13Format"));
   l2->addWidget(this->findChild<QCheckBox*>("ReadZones"));

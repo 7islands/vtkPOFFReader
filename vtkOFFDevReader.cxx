@@ -1593,6 +1593,23 @@ public:
       }
   }
 
+  //method for swapping the byte order, based on the wordsize
+  void SwapEndianness(unsigned char *buf, const int len, const int wordsize)
+  {
+    char c[32]; //big buffer, just in case
+    unsigned char *pbuf = buf;
+    const int wordsize_1 = wordsize - 1;
+
+    for (int j = 0; j < len; j+=wordsize, pbuf+=wordsize)
+      {
+      memcpy(c, pbuf, wordsize);
+      for (int k = 0; k < wordsize; k++)
+        {
+          pbuf[k] = c[wordsize_1-k];
+        }
+      }
+  }
+  
   int ReadIntValue();
   float ReadFloatValue();
 };

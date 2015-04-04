@@ -2183,6 +2183,12 @@ public:
     {
       io.Read(reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)), size
           * sizeof(primitiveT));
+      if(io.GetIsSwapEndianness())
+        {
+        io.SwapEndianness(
+          reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)), size
+          * sizeof(primitiveT), sizeof(primitiveT));
+        }
     }
     void ReadValue(vtkFoamIOobject&, vtkFoamToken& currToken)
     {
@@ -2272,6 +2278,10 @@ public:
           {
           io.ReadExpecting('(');
           io.Read(buffer, nBytes);
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(buffer, nBytes, sizeof(double));
+            }
           this->Ptr->SetTuple(i, reinterpret_cast<double *>(buffer));
           io.ReadExpecting(')');
           }
@@ -2282,6 +2292,12 @@ public:
           {
           io.Read(reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
               sizeof(float) * nComponents * size);
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(
+              reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
+              sizeof(float) * nComponents * size, sizeof(float));
+            }
           }
         else
           {
@@ -2326,6 +2342,12 @@ public:
             float *destination = this->Ptr->GetPointer(i * unitSize);
             io.Read(reinterpret_cast<unsigned char *>(buffer),
                 sizeof(double) * unitSize);
+            if(io.GetIsSwapEndianness())
+              {
+              io.SwapEndianness(
+                reinterpret_cast<unsigned char *>(buffer),
+                sizeof(double) * unitSize, sizeof(double));
+              }
             for (int j = 0; j < unitSize; j++)
               {
               destination[j] = static_cast<float>(buffer[j]);
@@ -2335,6 +2357,12 @@ public:
           float *destination = this->Ptr->GetPointer(nDivs * unitSize);
           io.Read(reinterpret_cast<unsigned char *>(buffer),
               sizeof(double) * remainingSize);
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(
+              reinterpret_cast<unsigned char *>(buffer),
+              sizeof(double) * remainingSize, sizeof(double));
+            }
           for (int j = 0; j < remainingSize; j++)
             {
             destination[j] = static_cast<float>(buffer[j]);
@@ -2560,6 +2588,12 @@ public:
               io.ReadExpecting('(');
               io.Read(reinterpret_cast<unsigned char*>(listI), sizeJ
                   * sizeof(int));
+              if(io.GetIsSwapEndianness())
+                {
+                io.SwapEndianness(
+                  reinterpret_cast<unsigned char*>(listI), sizeJ
+                  * sizeof(int), sizeof(int));
+                }
               io.ReadExpecting(')');
               }
             }
@@ -2633,6 +2667,12 @@ public:
           io.ReadExpecting('(');
           io.Read(reinterpret_cast<unsigned char*>(array->GetPointer(0)),
               sizeI * sizeof(int));
+          if(io.GetIsSwapEndianness())
+            {
+            io.SwapEndianness(
+              reinterpret_cast<unsigned char*>(array->GetPointer(0)),
+              sizeI * sizeof(int), sizeof(int));
+            }
           io.ReadExpecting(')');
           }
         }
@@ -2706,6 +2746,12 @@ void vtkFoamEntryValue::listTraits<vtkFloatArray, float>::ReadBinaryList(
     {
     io.Read(reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
         sizeof(float) * size);
+    if(io.GetIsSwapEndianness())
+      {
+      io.SwapEndianness(
+        reinterpret_cast<unsigned char *>(this->Ptr->GetPointer(0)),
+        sizeof(float) * size, sizeof(float));
+      }
     }
   else
     {
@@ -2742,6 +2788,12 @@ void vtkFoamEntryValue::listTraits<vtkFloatArray, float>::ReadBinaryList(
       float *destination = this->Ptr->GetPointer(i * bufferUnit);
       io.Read(reinterpret_cast<unsigned char *>(buffer),
           sizeof(double) * bufferUnit);
+      if(io.GetIsSwapEndianness())
+        {
+        io.SwapEndianness(
+          reinterpret_cast<unsigned char *>(buffer),
+          sizeof(double) * bufferUnit, sizeof(double));
+        }
       for (int j = 0; j < bufferUnit; j++)
         {
         destination[j] = static_cast<float>(buffer[j]);
@@ -2751,6 +2803,12 @@ void vtkFoamEntryValue::listTraits<vtkFloatArray, float>::ReadBinaryList(
     float *destination = this->Ptr->GetPointer(nDivs * bufferUnit);
     io.Read(reinterpret_cast<unsigned char *>(buffer),
         sizeof(double) * remainingSize);
+    if(io.GetIsSwapEndianness())
+      {
+      io.SwapEndianness(
+        reinterpret_cast<unsigned char *>(buffer),
+        sizeof(double) * remainingSize, sizeof(double));
+      }
     for (int j = 0; j < remainingSize; j++)
       {
       destination[j] = static_cast<float>(buffer[j]);
